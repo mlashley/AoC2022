@@ -9,22 +9,20 @@ fn main() {
         let mut elf_carrying_vector = Vec::with_capacity(260); // we know this is enough from part1
 
         // Consumes the iterator, returns an (Optional) String
-        for line in lines {
-            if let Ok(cal) = line {
-                let i = cal.parse::<i32>().unwrap_or(0);
-                current_elf_sum += i;
-                if i == 0 {
-                    elf_carrying_vector.push(current_elf_sum);
-                    if current_elf_sum > elf_max {
-                        elf_max = current_elf_sum;
-                        println!(
-                            "Debug: Elf {} is new max {}",
-                            elf_carrying_vector.len(),
-                            current_elf_sum
-                        );
-                    }
-                    current_elf_sum = 0;
+        for cal in lines.flatten() {
+            let i = cal.parse::<i32>().unwrap_or(0);
+            current_elf_sum += i;
+            if i == 0 {
+                elf_carrying_vector.push(current_elf_sum);
+                if current_elf_sum > elf_max {
+                    elf_max = current_elf_sum;
+                    println!(
+                        "Debug: Elf {} is new max {}",
+                        elf_carrying_vector.len(),
+                        current_elf_sum
+                    );
                 }
+                current_elf_sum = 0;
             }
         }
         // No blank line at end - check the final elf
