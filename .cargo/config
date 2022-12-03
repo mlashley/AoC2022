@@ -1,0 +1,14 @@
+[alias]     # command aliases
+b = "build"
+c = "check"
+t = "test"
+r = "run"
+rr = "run --release"
+
+[cargo-new]
+name = "Malcolm Lashley"
+email = "mlashley@gmail.com"
+vcs = "git"
+
+[target.x86_64-unknown-linux-gnu]
+#rustflags = ["-C target-cpu=native"]  # custom flags for `rustc
