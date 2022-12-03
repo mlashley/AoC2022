@@ -13,13 +13,13 @@ fn main() {
             let pn = p.next();
             match pn {
                 Some(x) => seen = x,
-                None => println!("Error parsing {}", pair)
+                None => println!("Error parsing {}", pair),
             }
             p.next();
             let pn = p.next();
             match pn {
                 Some(x) => to_play = x,
-                None => println!("Error parsing {}", pair)
+                None => println!("Error parsing {}", pair),
             }
 
             let round_score = score_part1(seen, to_play);
@@ -55,39 +55,40 @@ where
 // A = Rock, B = Paper, C = Scissors
 // X = Rock, Y = Paper, Z = Scissors
 
-fn score_part1(them: char, us: char) -> i32
-{
+fn score_part1(them: char, us: char) -> i32 {
     let mut score: i32 = 0;
     match us {
         'X' => score += 1,
         'Y' => score += 2,
         'Z' => score += 3,
-        _ => println!("Warning - unexpected {} looking for X,Y,Z",us)
+        _ => println!("Warning - unexpected {} looking for X,Y,Z", us),
     }
     match them {
-        'A' => match us { // Rock
+        'A' => match us {
+            // Rock
             'X' => score += 3, // draw
             'Y' => score += 6, // win
             'Z' => score += 0, // lose
-            _ => println!("Warning - unexpected {} looking for X,Y,Z",us)
+            _ => println!("Warning - unexpected {} looking for X,Y,Z", us),
         },
 
-        'B' => match us { // Paper
+        'B' => match us {
+            // Paper
             'X' => score += 0, // lose
             'Y' => score += 3, // draw
             'Z' => score += 6, // win
-            _ => println!("Warning - unexpected {} looking for X,Y,Z",us)
+            _ => println!("Warning - unexpected {} looking for X,Y,Z", us),
         },
 
-        'C' => match us { // Scissors
+        'C' => match us {
+            // Scissors
             'X' => score += 6, // win
             'Y' => score += 0, // lose
             'Z' => score += 3, // draw
-            _ => println!("Warning - unexpected {} looking for X,Y,Z",us)
+            _ => println!("Warning - unexpected {} looking for X,Y,Z", us),
         },
 
-
-        _ => println!("Warning - unexpected {} looking for A,B,C",them)
+        _ => println!("Warning - unexpected {} looking for A,B,C", them),
     }
 
     score
