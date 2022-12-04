@@ -25,15 +25,31 @@ fn main() {
             println!("Prio: {} Total: {} ", p.unwrap(), priority_total);
         }
     }
+
+    // Part 2
+    let mut mask_array: [u64; 3] = [0; 3];
+    if let Ok(lines) = read_lines("./input.txt") {
+        let mut priority_total = 0;
+        for (i,backpack) in lines.enumerate() {
+
+            mask_array[i%3] = str_to_mask(backpack.unwrap());
+            
+            if i%3 == 2 { // We have our group
+                let uniq = mask_array[0] & mask_array[1] & mask_array[2];
+                let p = get_priority(uniq);
+                priority_total += p.unwrap();
+                println!("Prio: {} Total: {} ", p.unwrap(), priority_total);
+            }
+        }
+    }
+
 }
 
 fn str_to_mask(s: String) -> u64 {
     let ass = AsciiStr::from_ascii(&s).unwrap();
-    println!("AS: {:?} ", ass.as_bytes());
-
+    // println!("AS: {:?} ", ass.as_bytes());
     let base: u64 = 2;
     let mut mask: u64 = 0;
-
     for ch in ass.chars() {
         if ch >= AsciiChar::A && ch <= AsciiChar::Z {
             let d = 26 + ch.as_byte() - AsciiChar::A.as_byte();
