@@ -12,18 +12,10 @@ fn main() {
             let l = backpack.len() / 2;
             let mut compartment1 = backpack;
             let compartment2 = compartment1.split_off(l);
-            // println!("{} {}",compartment1,compartment2);
 
-            let mask1 = str_to_mask(compartment1);
-            // println!("Mask1 {:#b}", mask1);
-            let mask2 = str_to_mask(compartment2);
-            // println!("Mask2 {:#b}", mask2);
-
-            // println!("AND: {:#b}", mask1 & mask2);
-
-            let p = get_priority(mask1 & mask2);
+            // Find unique letters by and'ing the two masks.
+            let p = get_priority(str_to_mask(compartment1) & str_to_mask(compartment2));
             priority_total += p.unwrap();
-            // println!("Prio: {} Total: {} ", p.unwrap(), priority_total);
         }
         soln.0 = priority_total;
     }
@@ -36,11 +28,8 @@ fn main() {
             mask_array[i % 3] = str_to_mask(backpack.unwrap());
 
             if i % 3 == 2 {
-                // We have our group
-                let uniq = mask_array[0] & mask_array[1] & mask_array[2];
-                let p = get_priority(uniq);
-                priority_total += p.unwrap();
-                // println!("Prio: {} Total: {} ", p.unwrap(), priority_total);
+                priority_total +=
+                    get_priority(mask_array[0] & mask_array[1] & mask_array[2]).unwrap();
             }
         }
         soln.1 = priority_total;
@@ -48,9 +37,9 @@ fn main() {
     println!("==> Solutions for Part1,Part2 {:?} <==", soln);
 }
 
+// Convert a string to an int where bits 0 thru 51 represent the presence or absence of [a-z,A-Z]
 fn str_to_mask(s: String) -> u64 {
     let ass = AsciiStr::from_ascii(&s).unwrap();
-    // println!("AS: {:?} ", ass.as_bytes());
     let base: u64 = 2;
     let mut mask: u64 = 0;
     for ch in ass.chars() {
@@ -62,10 +51,10 @@ fn str_to_mask(s: String) -> u64 {
             mask |= base.pow(d as u32);
         }
     }
-    // println!("i = {}", mask);
     mask
 }
 
+// Find the set bitbumber (I'm sure there should be a built-in/crate for this...)
 fn get_priority(i: u64) -> Option<u64> {
     let base: u64 = 2;
     for c in 0..52 {
