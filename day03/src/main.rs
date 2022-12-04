@@ -5,6 +5,7 @@ use std::io::{self, BufRead};
 use std::path::Path;
 
 fn main() {
+    let mut soln = (0, 0);
     if let Ok(lines) = read_lines("./input.txt") {
         let mut priority_total = 0;
         for backpack in lines.flatten() {
@@ -14,35 +15,37 @@ fn main() {
             // println!("{} {}",compartment1,compartment2);
 
             let mask1 = str_to_mask(compartment1);
-            println!("Mask1 {:#b}", mask1);
+            // println!("Mask1 {:#b}", mask1);
             let mask2 = str_to_mask(compartment2);
-            println!("Mask2 {:#b}", mask2);
+            // println!("Mask2 {:#b}", mask2);
 
-            println!("AND: {:#b}", mask1 & mask2);
+            // println!("AND: {:#b}", mask1 & mask2);
 
             let p = get_priority(mask1 & mask2);
             priority_total += p.unwrap();
-            println!("Prio: {} Total: {} ", p.unwrap(), priority_total);
+            // println!("Prio: {} Total: {} ", p.unwrap(), priority_total);
         }
+        soln.0 = priority_total;
     }
 
     // Part 2
     let mut mask_array: [u64; 3] = [0; 3];
     if let Ok(lines) = read_lines("./input.txt") {
         let mut priority_total = 0;
-        for (i,backpack) in lines.enumerate() {
+        for (i, backpack) in lines.enumerate() {
+            mask_array[i % 3] = str_to_mask(backpack.unwrap());
 
-            mask_array[i%3] = str_to_mask(backpack.unwrap());
-            
-            if i%3 == 2 { // We have our group
+            if i % 3 == 2 {
+                // We have our group
                 let uniq = mask_array[0] & mask_array[1] & mask_array[2];
                 let p = get_priority(uniq);
                 priority_total += p.unwrap();
-                println!("Prio: {} Total: {} ", p.unwrap(), priority_total);
+                // println!("Prio: {} Total: {} ", p.unwrap(), priority_total);
             }
         }
+        soln.1 = priority_total;
     }
-
+    println!("==> Solutions for Part1,Part2 {:?} <==", soln);
 }
 
 fn str_to_mask(s: String) -> u64 {
