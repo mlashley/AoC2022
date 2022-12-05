@@ -45,7 +45,8 @@ fn main() {
                         .collect::<Vec<usize>>();
                     let (count, from, to) = (digits[0], digits[1], digits[2]);
                     println!("Move {} from {} to {}", count, from, to);
-                    move_cargo(&mut board, from, to, count);
+                    // move_cargo(&mut board, from, to, count);
+                    move_cargo_part2(&mut board, from, to, count);
                     print_board(&board);
                 }
             }
@@ -71,6 +72,16 @@ fn move_cargo(board: &mut [VecDeque<char>], from: usize, to: usize, count: usize
     for _c in 0..count {
         let intermediate = board[from - 1].pop_back().unwrap();
         board[to - 1].push_back(intermediate);
+    }
+}
+
+fn move_cargo_part2(board: &mut [VecDeque<char>], from: usize, to: usize, count: usize) {
+    let mut intermediate = VecDeque::new();
+    for _c in 0..count {
+        intermediate.push_front(board[from - 1].pop_back().unwrap());
+    }
+    for _c in 0..count {
+        board[to - 1].push_back(intermediate.pop_front().unwrap());
     }
 }
 
