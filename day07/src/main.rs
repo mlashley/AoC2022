@@ -4,14 +4,14 @@ use std::io::{self, BufRead};
 use std::path::Path;
 
 // Tree stuff based on
-/// https://dev.to/deciduously/no-more-tears-no-more-knots-arena-allocated-trees-in-rust-44k6
+// https://dev.to/deciduously/no-more-tears-no-more-knots-arena-allocated-trees-in-rust-44k6
+// Vastly simplified for this task.
 
 #[derive(Debug)]
 struct Node<T>
 where
     T: PartialEq,
 {
-    idx: usize,
     val: T,
     parent: Option<usize>,
     children: Vec<usize>,
@@ -21,9 +21,8 @@ impl<T> Node<T>
 where
     T: PartialEq,
 {
-    fn new(idx: usize, val: T) -> Self {
+    fn new(val: T) -> Self {
         Self {
-            idx,
             val,
             parent: None,
             children: vec![],
@@ -45,7 +44,7 @@ where
 {
     fn node(&mut self, val: T) -> usize {
         let idx = self.arena.len();
-        self.arena.push(Node::new(idx, val));
+        self.arena.push(Node::new(val));
         idx
     }
 }
@@ -110,7 +109,6 @@ fn parse(input_filename: String) -> ArenaTree<FilesystemThing> {
 
     if let Ok(lines) = read_lines(input_filename) {
         let cd_re = Regex::new(r"^\$ cd (.*)$").unwrap();
-        let ls_re = Regex::new(r"^\$ ls").unwrap();
         let dir_re = Regex::new(r"^dir (.*)").unwrap();
         let file_re = Regex::new(r"^(\d+) (.*)").unwrap();
 
@@ -131,10 +129,6 @@ fn parse(input_filename: String) -> ArenaTree<FilesystemThing> {
                         }
                     }
                 }
-            }
-
-            if ls_re.is_match(&line) {
-                // println!("LS: ")
             }
 
             if let Some(caps) = dir_re.captures(&line) {
@@ -159,7 +153,7 @@ fn parse(input_filename: String) -> ArenaTree<FilesystemThing> {
     tree
 }
 
-fn print_fstree(tree: &ArenaTree<FilesystemThing>, start_idx: usize, indent: String) {
+fn _print_fstree(tree: &ArenaTree<FilesystemThing>, start_idx: usize, indent: String) {
     if indent.is_empty() {
         println!("ROOT:{}", tree.arena[start_idx].val.name);
     }
@@ -171,7 +165,7 @@ fn print_fstree(tree: &ArenaTree<FilesystemThing>, start_idx: usize, indent: Str
             );
             let mut nextindent = indent.clone();
             nextindent.push_str("  ");
-            print_fstree(tree, *child, nextindent);
+            _print_fstree(tree, *child, nextindent);
         } else {
             println!(
                 "{}{}<{}>",
