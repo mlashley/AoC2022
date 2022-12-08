@@ -85,6 +85,7 @@ fn main() {
     let part1size = sum_less_than(&mut tree, 0);
     debug_assert!(95437 == part1size);
     // print_fstree(&tree, 0, "".into());
+    debug_assert!(find_minimal_remover(&mut tree) == 24933642);
 
     // Part1
     let mut tree: ArenaTree<FilesystemThing> = parse("./input.txt".into());
@@ -93,6 +94,13 @@ fn main() {
     println!("Part1 TotalSize = {}", size);
     let part1size = sum_less_than(&mut tree, 0);
     println!("Part1 <100000 Size = {}", part1size);
+    debug_assert!(1325919 == part1size); // Keep Part 1 solving :)
+
+    // Part2
+    println!(
+        "Part2 - Delete directory with size {}",
+        find_minimal_remover(&mut tree)
+    );
 }
 
 fn parse(input_filename: String) -> ArenaTree<FilesystemThing> {
@@ -179,12 +187,12 @@ fn size_fstree(tree: &mut ArenaTree<FilesystemThing>, start_idx: usize) -> usize
     for child in children {
         if tree.arena[child].val.is_dir {
             let s = size_fstree(tree, child);
-            tree.arena[child].val.size = s;
             size += s;
         } else {
             size += tree.arena[child].val.size
         }
     }
+    tree.arena[start_idx].val.size = size;
     size
 }
 
@@ -201,6 +209,32 @@ fn sum_less_than(tree: &mut ArenaTree<FilesystemThing>, start_idx: usize) -> usi
         }
     }
     part1size
+}
+
+fn get_dir_sizes(tree: &mut ArenaTree<FilesystemThing>, start_idx: usize) -> Vec<usize> {
+    let mut dir_sizes = Vec::new();
+    let children = tree.arena[start_idx].children.clone();
+    dir_sizes.push(tree.arena[start_idx].val.size);
+    for child in children {
+        if tree.arena[child].val.is_dir {
+            dir_sizes.append(&mut get_dir_sizes(tree, child));
+        }
+    }
+    dir_sizes
+}
+
+fn find_minimal_remover(tree: &mut ArenaTree<FilesystemThing>) -> usize {
+    let size = size_fstree(tree, 0);
+    let need_to_free = 30000000 - (70000000 - size);
+    println!("Need to free {}", need_to_free);
+    let mut ds = get_dir_sizes(tree, 0);
+    ds.sort();
+    for s in ds {
+        if s > need_to_free {
+            return s;
+        }
+    }
+    0
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
