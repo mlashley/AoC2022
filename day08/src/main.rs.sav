@@ -1,0 +1,183 @@
+use std::fmt::Debug;
+use std::fs::File;
+use std::io::{self, BufRead};
+use std::path::Path;
+// use ndarray::prelude::*;
+use ndarray::{Array1, Array2, Axis, ArrayView, ArrayView1};
+
+
+
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where
+    P: AsRef<Path>,
+{
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
+}
+fn main() {
+    // Test
+    debug_assert!(parse("./input_sample.txt".into(),5) == 21);
+}
+
+fn parse(input_filename: String, size: usize) -> u32 {
+
+    type M = Array2<u32>;
+    let mut grid = M::zeros((size, size));
+    
+    
+    if let Ok(lines) = read_lines(input_filename) {
+        let mut y = 0;
+        for line in lines.flatten() {
+            let p : Vec<u32> = line.chars().map(|c| c.to_digit(10).unwrap()).collect();
+            let a = Array1::from(p);
+            println!("{:?}",a);
+            grid.append(Axis(0), a);
+
+            
+            // for (x,c) in line.chars().map(|c| c.to_digit(10).unwrap()).enumerate() {
+            //     grid.set
+            //     grid[y][x] = c;
+            // }
+            
+            // y += 1;
+        }
+    }
+    
+    // print_grid(grid);
+    
+    // return count_visible(grid)
+    0
+}
+
+fn count_visible(grid: &mut [ &mut [ u32 ]]) -> u32 {
+    let dim = grid.len();
+
+    let mut mask = Vec::new();
+    for _r in grid {
+        mask.push(vec![false; dim]);
+    }
+    // Mark the Outside Visible
+    for y in 0..dim {
+        for x in 0..dim {
+            if x == 0 || x == dim-1 || y == 0 || y == dim-1 {
+                mask[y][x] = true;
+            }
+        }
+    }
+    
+
+    for y in 1..dim-1 {
+        for x in 1..dim-1 {
+            
+        }
+    }
+
+    print_mask(&mask);
+
+   10 
+}
+//     let mut north_mask = Vec::new();
+//     let mut south_mask = Vec::new();
+//     let mut east_mask = Vec::new();
+//     let mut west_mask = Vec::new();
+
+
+//     let l = grid.len();
+//     let mut cnt: u32 = 0;
+
+//     for _r in grid {
+//         north_mask.push(vec![false; l]);
+//         south_mask.push(vec![false; l]);
+//         east_mask.push(vec![false; l]);
+//         west_mask.push(vec![false; l]);
+//     }
+    
+//     // Mark the Outside Visible
+//     for (y,row) in grid.iter().enumerate() {
+//         for (x,tree) in row.iter().enumerate() {
+//             if x == 0 || x == row.len()-1 || y == 0 || y == grid.len()-1 {
+//                 north_mask[y][x] = true;
+//                 south_mask[y][x] = true;
+//                 east_mask[y][x] = true;
+//                 west_mask[y][x] = true;
+//             }
+//         }
+//     }
+
+
+
+//     // // L->R (Eest)
+//     // for y in 1..grid.len()-1 {
+//     //     for x in 1..grid[0].len()-1 {
+//     //         if &grid[y][x] > &grid[y][x-1] && east_mask[y][x-1] {
+//     //             east_mask[y][x] = true;
+//     //             println!("E: {} > {} at x,y=>{},{}",&grid[y][x],&grid[y][x-1],x,y);
+//     //         }          
+//     //     }
+//     // }
+//     // print_grid(&east_mask);
+
+//     // // R->L (West)
+//     // for y in 1..grid.len()-1 {
+//     //     for x in (1..grid[0].len()-1).rev() {
+//     //         if &grid[y][x] > &grid[y][x+1] && west_mask[y][x+1] {
+//     //             west_mask[y][x] = true;
+//     //             println!("W: {} > {} at x,y=>{},{}",&grid[y][x],&grid[y][x+1],x,y);
+//     //         }          
+//     //     }
+//     // }
+//     // print_grid(&west_mask);
+
+//     // // Top-> Bottom (North)
+//     // for y in 1..grid.len()-1 {
+//     //     for x in 1..grid[0].len()-1 {
+//     //         if &grid[y][x] > &grid[y-1][x] && north_mask[y-1][x] {
+//     //             north_mask[y][x] = true;
+//     //             println!("N: {} > {} at x,y=>{},{}",&grid[y][x],&grid[y-1][x],x,y);
+//     //         }          
+//     //     }
+//     // }
+//     // print_grid(&north_mask);
+    
+//     // // Bottom -> Top (South)
+//     // for y in (1..grid.len()-1).rev() {
+//     //     for x in 1..grid[0].len()-1 {
+//     //         if &grid[y][x] > &grid[y+1][x] && south_mask[y+1][x] {
+//     //             south_mask[y][x] = true;
+//     //             println!("S: {} > {} at x,y=>{},{}",&grid[y][x],&grid[y+1][x],x,y);
+//     //         }          
+//     //     }
+//     // }
+//     // print_grid(&south_mask);
+
+
+//     // for y in 0..grid.len() {
+//     //     for x in 0..grid[0].len() {
+//     //         if north_mask[y][x] || south_mask[y][x] || east_mask [y][x] || west_mask[y][x] {
+//     //             cnt += 1;
+//     //             print!("0");
+//     //         } else {
+//     //             print!(".");
+//     //         }
+//     //     }
+//     //     println!();
+//     // }
+
+//     println!("Cnt: {}",cnt);
+
+//     cnt
+// }
+
+fn print_mask<T: Debug>(grid: &Vec<Vec<T>>) 
+{
+    for row in grid {
+        println!("{:?}",row);
+    }
+}
+
+fn print_grid<T: Debug>(grid: &mut[&mut[T]]) 
+{
+    for row in grid {
+        println!("{:?}",row);
+    }
+}
