@@ -12,16 +12,18 @@ where
 }
 fn main() {
     // Test
-    debug_assert!(parse("./input_sample.txt".into()) == 21);
-    debug_assert!(parse("./input_malc.txt".into()) == 58);
+    debug_assert!(parse("./input_sample.txt".into()) == (21, 8));
+    debug_assert!(parse("./input_malc.txt".into()) == (58, 8));
 
     // Part 1
-    let part1 = parse("./input.txt".into());
+    let (part1, part2) = parse("./input.txt".into());
     println!("Part1: {}", part1);
+    println!("Part2: {}", part2);
     debug_assert!(part1 == 1798); // Keep part 1 working.
+    debug_assert!(part2 == 259308); // Keep part 2 working.
 }
 
-fn parse(input_filename: String) -> u32 {
+fn parse(input_filename: String) -> (u32, u32) {
     let mut grid: Vec<Vec<u32>> = Vec::new();
 
     if let Ok(lines) = read_lines(input_filename) {
@@ -33,7 +35,10 @@ fn parse(input_filename: String) -> u32 {
         println!("Failed to read file");
     }
     // print_grid(&grid);
-    count_visible(grid)
+    let g2 = grid.clone(); // I should properly learn how borrowing works.
+    let p1 = count_visible(grid);
+    let p2 = scenic_score(g2);
+    (p1, p2)
 }
 
 fn count_visible(grid: Vec<Vec<u32>>) -> u32 {
@@ -103,6 +108,50 @@ fn count_visible(grid: Vec<Vec<u32>>) -> u32 {
     }
     println!("Count: {}", cnt);
     cnt
+}
+
+fn scenic_score(grid: Vec<Vec<u32>>) -> u32 {
+    let mut scores: Vec<u32> = Vec::new();
+    let dim = grid.len();
+
+    for y in 1..dim - 1 {
+        for x in 1..dim - 1 {
+            let mut scenic_score = (0, 0, 0, 0);
+            // Look Left
+            for lookx in (0..x).rev() {
+                scenic_score.1 += 1;
+                if grid[y][x] <= grid[y][lookx] {
+                    break;
+                }
+            }
+
+            // Look Right
+            for lookx in x + 1..dim {
+                scenic_score.2 += 1;
+                if grid[y][x] <= grid[y][lookx] {
+                    break;
+                }
+            }
+
+            // Look Up
+            for looky in (0..y).rev() {
+                scenic_score.0 += 1;
+                if grid[y][x] <= grid[looky][x] {
+                    break;
+                }
+            }
+
+            // Look Down
+            for looky in y + 1..dim {
+                scenic_score.3 += 1;
+                if grid[y][x] <= grid[looky][x] {
+                    break;
+                }
+            }
+            scores.push(scenic_score.0 * scenic_score.1 * scenic_score.2 * scenic_score.3);
+        }
+    }
+    *scores.iter().max().unwrap()
 }
 
 fn print_grid<T: Debug>(grid: &Vec<Vec<T>>) {
