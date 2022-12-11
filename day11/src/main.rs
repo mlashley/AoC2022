@@ -6,7 +6,6 @@ use std::path::Path;
 use regex::Regex;
 use std:: collections::VecDeque;
 
-
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where
     P: AsRef<Path>,
@@ -14,8 +13,6 @@ where
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }
-
-
 
 fn main() {
     // Test
@@ -34,20 +31,22 @@ enum OpType {
     Add,
     Multiply,
 }
-
-
 #[derive(Debug, Default)]
-struct Monkey {
-    operation_rhs: Option<u32>, // None means 'self' (or 'old')
+struct Monkey<T> {
+    operation_rhs: Option<T>, // None means 'self' (or 'old')
     operation: OpType, 
-    test_divisor: u32,
-    items: VecDeque<u32>,
+    test_divisor: T,
+    items: VecDeque<T>,
     destination_monkey: (u8,u8),
     inspections: u32,
 }
 
-impl Monkey {
-    fn from_string(s: &str) -> Result<Self, String> {
+impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32> + Ord + Div<Output=T> + std::ops::Rem<Output=T> + Copy > Monkey<T>
+{
+
+    fn from_string(s: &str) -> Result<Self, String>
+    where <T as std::str::FromStr>::Err: Debug
+    {
 
         // let hdr_re = Regex::new(r"^Monkey (\d+):$").unwrap();
         let items_re = Regex::new(r"^Starting items: (.*)$").unwrap();
@@ -58,7 +57,7 @@ impl Monkey {
 
         let mut operation = OpType::default();
         let mut operation_rhs = Option::None;
-        let mut test_divisor = 0;
+        let mut test_divisor: T = 0.try_into().unwrap();
         let mut destination_monkey = (0,0);
         let mut items = VecDeque::new();
 
@@ -66,7 +65,7 @@ impl Monkey {
             // if let Some(caps) = hdr_re.captures(&line) {};
             if let Some(caps) = items_re.captures(line) {
                 let itemstr = caps.get(1).unwrap().as_str();
-                items = itemstr.split(", ").map(|x| x.parse::<u32>().unwrap()).collect();
+                items = itemstr.split(", ").map(|x| x.parse::<T>().unwrap()).collect();
             };
             if let Some(caps) = op_re.captures(line) {
                 let opstr = caps.get(1).unwrap().as_str();
@@ -78,11 +77,12 @@ impl Monkey {
                 operation_rhs = if t.eq("old") {
                     None
                 } else {
-                    Some(t.parse::<u32>().unwrap())
+                    Some(t.parse::<T>().unwrap())
                 };
             };
+            
             if let Some(caps) = test_re.captures(line) {
-                test_divisor = caps.get(1).unwrap().as_str().parse::<u32>().unwrap();
+                test_divisor = caps.get(1).unwrap().as_str().parse::<T>().unwrap();
             };
             if let Some(caps) = truedest_re.captures(line) {
                 destination_monkey.0 = caps.get(1).unwrap().as_str().parse::<u8>().unwrap();
@@ -90,9 +90,6 @@ impl Monkey {
             if let Some(caps) = falsedest_re.captures(line) {
                 destination_monkey.1 = caps.get(1).unwrap().as_str().parse::<u8>().unwrap();
             }
-
-
-
         }
 
         Ok(Self {
@@ -107,7 +104,7 @@ impl Monkey {
 
     // Inspect the items we hold
     // return an Vec of tuples indicating items and their destination monkey.
-    fn inspect(&mut self) -> Vec<(u8,u32)> {
+    fn inspect(&mut self) -> Vec<(u8,T)> {
 
         let mut tosses = Vec::new();
         while let Some(mut item) = self.items.pop_front() {
@@ -121,9 +118,12 @@ impl Monkey {
             if self.operation == OpType::Add { item += rhs; }
             else if self.operation == OpType::Multiply {item *= rhs;}
             // print!(" new worry level {}",item);
-            item = (item as f64).div(3.0) as u32;
+            let three = T::try_from(3).ok().unwrap();
+
+            item = item / three;
             // println!(" bored => level {}",item);
-            if item % self.test_divisor == 0 {
+            let zero = T::try_from(0).ok().unwrap();
+            if item % self.test_divisor == zero {
                 // println!("  Is divisble by {}, throw to {}",self.test_divisor,self.destination_monkey.0);
                 tosses.push((self.destination_monkey.0,item));
             } else {
@@ -143,7 +143,7 @@ fn part1(input_filename: String) -> Result<u32, String> {
     if let Ok(lines) = read_lines(input_filename) {
         for line in lines.flatten() {
             if line.is_empty() {
-                let monkey = Monkey::from_string(&monkeylines)?;
+                let monkey: Monkey<u32> = Monkey::from_string(&monkeylines)?;
                 monkeys.push(monkey);
 
             } else {
