@@ -105,6 +105,8 @@ impl Monkey {
         })
     }
 
+    // Inspect the items we hold
+    // return an Vec of tuples indicating items and their destination monkey.
     fn inspect(&mut self) -> Vec<(u8,u32)> {
 
         let mut tosses = Vec::new();
@@ -133,8 +135,6 @@ impl Monkey {
     }
 
 }
-
-
 
 fn part1(input_filename: String) -> Result<u32, String> {
     let mut monkeys = Vec::new();
