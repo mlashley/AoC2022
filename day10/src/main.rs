@@ -89,8 +89,17 @@ impl Cpu {
         };
         self.instruction_cycles_remaining = instruction.cycles;
 
+        let mut crt = String::new();
         loop {
             self.history.push(self.x);
+
+            let beampos =  self.cycle as i32 % 40;
+            let pixel = if self.x >= beampos-1 && self.x <= beampos+1 {
+                '#'
+            } else {
+                '.'
+            };
+            crt.push(pixel);
 
             self.cycle += 1;
             self.instruction_cycles_remaining -= 1;
@@ -121,6 +130,12 @@ impl Cpu {
             signal_strength += j;
             // println!( "{} * {} = {} ... ss: {}", i, self.history[i - 1], j, signal_strength )
         }
+        for (i,c) in crt.chars().enumerate() {
+            print!("{}",c);
+            if i % 40 == 39 { println!() }
+        }
+        println!();
+
         signal_strength
     }
 }
