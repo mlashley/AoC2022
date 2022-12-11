@@ -5,8 +5,9 @@ use std::ops::Div;
 use std::path::Path;
 use regex::Regex;
 use std:: collections::VecDeque;
-use num_bigint::BigUint;
-use num_traits::{Zero, One};
+// use num_bigint::BigUint;
+use num_integer::lcm;
+use num_traits::Zero;
 
 
 
@@ -19,18 +20,18 @@ where
 }
 
 fn main() {
-    // Test
-    debug_assert!(part1("./input_sample.txt".into(),false).unwrap() == 10605);
 
     // Part 1
+    debug_assert!(part1("./input_sample.txt".into(),false).unwrap() == 10605);
     let part1_result = part1("./input.txt".into(),false).unwrap();
     println!("Part1: {}", part1_result);
     debug_assert!(part1_result == 55458); // Keep part 1 working.
 
     // Part2
-    // let part2 = part1("./input.txt".into(),true).unwrap();
-    // println!("Part2: {}", part2);
-
+    debug_assert!(part1("./input_sample.txt".into(),true).unwrap() == 2713310158);
+    let part2_result = part1("./input.txt".into(),true).unwrap();
+    println!("Part2: {}", part2_result);
+    debug_assert!(part2_result == 14508081294); // Keep part 2 working.
 }
 #[derive(Debug, Default, PartialEq)]
 enum OpType {
@@ -55,7 +56,6 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
     fn from_string(s: &str) -> Result<Self, String>
     where <T as std::str::FromStr>::Err: Debug
     {
-
         // let hdr_re = Regex::new(r"^Monkey (\d+):$").unwrap();
         let items_re = Regex::new(r"^Starting items: (.*)$").unwrap();
         let op_re = Regex::new(r"^Operation: new = old (.) (.*)$").unwrap();
@@ -116,7 +116,7 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
 
     // Inspect the items we hold
     // return an Vec of tuples indicating items and their destination monkey.
-    fn inspect(&mut self,part2: bool) -> Vec<(u8,T)> {
+    fn inspect(&mut self,part2: bool, lcm: T) -> Vec<(u8,T)> {
 
         let mut tosses = Vec::new();
         while let Some(mut item) = self.items.pop_front() {
@@ -139,6 +139,15 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
                 let three = T::try_from(3).ok().unwrap();
                 item = item / three;
                 // println!(" bored => level {}",item);
+            } else {
+                // Part 2 trick... it was a waste of time refactoring to use BigInt (way too slow)
+                // What we fail to realize initially, is that  without the divide, 
+                // add and multiply can be truncated modulo, without affecting the result
+                // since a+k === b+k (mod n),
+                // ka === kb (mod n)       
+                // wherever a===b mod(n) etc. etc.
+                let templcm = lcm.clone();
+                item = item % templcm;
             }
             let zero = T::try_from(0).ok().unwrap();
             let divisor = self.test_divisor.clone();
@@ -156,14 +165,14 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
 
 }
 
-fn part1(input_filename: String, is_part2: bool) -> Result<u32, String> {
+fn part1(input_filename: String, is_part2: bool) -> Result<u64, String> {
     let mut monkeys = Vec::new();
 
     let mut monkeylines = String::new();
     if let Ok(lines) = read_lines(input_filename) {
         for line in lines.flatten() {
             if line.is_empty() {
-                let monkey: Monkey<BigUint> = Monkey::from_string(&monkeylines)?;
+                let monkey: Monkey<u64> = Monkey::from_string(&monkeylines)?;
                 monkeys.push(monkey);
 
             } else {
@@ -173,20 +182,23 @@ fn part1(input_filename: String, is_part2: bool) -> Result<u32, String> {
         }
     }
 
+    // Calculate the LCM of our divisors - since they are all prime this is just a multiplication,
+    // but we stay general.
+    let mut ourlcm = 1;
+    for d in monkeys.iter().map(|x| x.test_divisor).collect::<Vec<u64>>() {
+        ourlcm = lcm(ourlcm,d);
+    }
+
     let iterations = if is_part2 {10000} else {20};
 
     for _round in 1..=iterations {
-        println!("== Round {} ==",_round);
         for i in 0..monkeys.len() {
             // println!("Monkey {}",i);
-            let tosses = monkeys[i].inspect(is_part2);
+            let tosses = monkeys[i].inspect(is_part2,ourlcm);
             for (throw_to,item) in tosses.iter() {
                 let evil_monkey_cloning111 = item.clone();
                 monkeys[*throw_to as usize].items.push_back(evil_monkey_cloning111);
             }
-        }
-        for (i,monkey) in monkeys.iter().enumerate() {
-            println!("Round {}: Monkey {} ends with: {:?} and inspected {} items",_round,i,monkey.items,monkey.inspections);
         }
     }
     for (i,monkey) in monkeys.iter().enumerate() {
@@ -198,5 +210,5 @@ fn part1(input_filename: String, is_part2: bool) -> Result<u32, String> {
     bizness.sort();
     bizness.reverse();
 
-    Ok(bizness[0]*bizness[1])
+    Ok(bizness[0] as u64 *bizness[1] as u64)
 }
