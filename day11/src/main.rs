@@ -5,6 +5,10 @@ use std::ops::Div;
 use std::path::Path;
 use regex::Regex;
 use std:: collections::VecDeque;
+use num_bigint::BigUint;
+use num_traits::{Zero, One};
+
+
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where
@@ -16,14 +20,17 @@ where
 
 fn main() {
     // Test
-    debug_assert!(part1("./input_sample.txt".into()).unwrap() == 10605);
+    debug_assert!(part1("./input_sample.txt".into(),false).unwrap() == 10605);
 
     // Part 1
-    let part1 = part1("./input.txt".into()).unwrap();
-    println!("Part1: {}", part1);
-    debug_assert!(part1 == 55458); // Keep part 1 working.
+    let part1_result = part1("./input.txt".into(),false).unwrap();
+    println!("Part1: {}", part1_result);
+    debug_assert!(part1_result == 55458); // Keep part 1 working.
 
-    // Part2 sits so nicely inside part 1 - I didn't refactor.
+    // Part2
+    // let part2 = part1("./input.txt".into(),true).unwrap();
+    // println!("Part2: {}", part2);
+
 }
 #[derive(Debug, Default, PartialEq)]
 enum OpType {
@@ -33,7 +40,8 @@ enum OpType {
 }
 #[derive(Debug, Default)]
 struct Monkey<T> {
-    operation_rhs: Option<T>, // None means 'self' (or 'old')
+    rhs_is_self: bool,
+    operation_rhs: T, 
     operation: OpType, 
     test_divisor: T,
     items: VecDeque<T>,
@@ -41,7 +49,7 @@ struct Monkey<T> {
     inspections: u32,
 }
 
-impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32> + Ord + Div<Output=T> + std::ops::Rem<Output=T> + Copy > Monkey<T>
+impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32> + std::cmp::PartialEq + Div<Output=T> + std::ops::Rem<Output=T> + num_traits::Zero + Clone > Monkey<T>
 {
 
     fn from_string(s: &str) -> Result<Self, String>
@@ -55,8 +63,9 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
         let truedest_re = Regex::new(r"^If true: throw to monkey (\d+)$").unwrap();
         let falsedest_re = Regex::new(r"^If false: throw to monkey (\d+)$").unwrap();
 
+        let mut rhs_is_self = false;
         let mut operation = OpType::default();
-        let mut operation_rhs = Option::None;
+        let mut operation_rhs: T = Zero::zero();
         let mut test_divisor: T = 0.try_into().unwrap();
         let mut destination_monkey = (0,0);
         let mut items = VecDeque::new();
@@ -74,10 +83,12 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
                 else { panic!("Unsupported operation {}", opstr)}
 
                 let t = caps.get(2).unwrap().as_str();
-                operation_rhs = if t.eq("old") {
-                    None
+                if t.eq("old") {
+                    operation_rhs = Zero::zero();
+                    rhs_is_self = true;
                 } else {
-                    Some(t.parse::<T>().unwrap())
+                    operation_rhs = t.parse::<T>().unwrap();
+                    rhs_is_self = false;
                 };
             };
             
@@ -93,6 +104,7 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
         }
 
         Ok(Self {
+            rhs_is_self,
             operation_rhs,
             operation,
             test_divisor,
@@ -104,26 +116,34 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
 
     // Inspect the items we hold
     // return an Vec of tuples indicating items and their destination monkey.
-    fn inspect(&mut self) -> Vec<(u8,T)> {
+    fn inspect(&mut self,part2: bool) -> Vec<(u8,T)> {
 
         let mut tosses = Vec::new();
         while let Some(mut item) = self.items.pop_front() {
      
             // print!("  Monkey inspects {}",item);
             self.inspections += 1;
-            let rhs = match self.operation_rhs {
-                None => item,
-                Some(x) => x,
-            };
-            if self.operation == OpType::Add { item += rhs; }
-            else if self.operation == OpType::Multiply {item *= rhs;}
-            // print!(" new worry level {}",item);
-            let three = T::try_from(3).ok().unwrap();
 
-            item = item / three;
-            // println!(" bored => level {}",item);
+            if self.rhs_is_self {
+                let temp = item.clone();
+                if self.operation == OpType::Add { item += temp; }
+                else if self.operation == OpType::Multiply {item *= temp;}
+            } else {
+                let temp = self.operation_rhs.clone();
+                if self.operation == OpType::Add { item += temp; }
+                else if self.operation == OpType::Multiply {item *= temp;}
+            }
+            
+            // print!(" new worry level {}",item);
+            if !part2 {
+                let three = T::try_from(3).ok().unwrap();
+                item = item / three;
+                // println!(" bored => level {}",item);
+            }
             let zero = T::try_from(0).ok().unwrap();
-            if item % self.test_divisor == zero {
+            let divisor = self.test_divisor.clone();
+            let tempitem = item.clone();
+            if tempitem % divisor == zero {
                 // println!("  Is divisble by {}, throw to {}",self.test_divisor,self.destination_monkey.0);
                 tosses.push((self.destination_monkey.0,item));
             } else {
@@ -136,14 +156,14 @@ impl<T: std::str::FromStr + std::ops::AddAssign + std::ops::MulAssign + From<u32
 
 }
 
-fn part1(input_filename: String) -> Result<u32, String> {
+fn part1(input_filename: String, is_part2: bool) -> Result<u32, String> {
     let mut monkeys = Vec::new();
 
     let mut monkeylines = String::new();
     if let Ok(lines) = read_lines(input_filename) {
         for line in lines.flatten() {
             if line.is_empty() {
-                let monkey: Monkey<u32> = Monkey::from_string(&monkeylines)?;
+                let monkey: Monkey<BigUint> = Monkey::from_string(&monkeylines)?;
                 monkeys.push(monkey);
 
             } else {
@@ -153,14 +173,20 @@ fn part1(input_filename: String) -> Result<u32, String> {
         }
     }
 
-    for _round in 1..=20 {
-        // println!("== Round {} ==",_round);
+    let iterations = if is_part2 {10000} else {20};
+
+    for _round in 1..=iterations {
+        println!("== Round {} ==",_round);
         for i in 0..monkeys.len() {
             // println!("Monkey {}",i);
-            let tosses = monkeys[i].inspect();
+            let tosses = monkeys[i].inspect(is_part2);
             for (throw_to,item) in tosses.iter() {
-                monkeys[*throw_to as usize].items.push_back(*item);
+                let evil_monkey_cloning111 = item.clone();
+                monkeys[*throw_to as usize].items.push_back(evil_monkey_cloning111);
             }
+        }
+        for (i,monkey) in monkeys.iter().enumerate() {
+            println!("Round {}: Monkey {} ends with: {:?} and inspected {} items",_round,i,monkey.items,monkey.inspections);
         }
     }
     for (i,monkey) in monkeys.iter().enumerate() {
