@@ -13,9 +13,6 @@ where
 }
 fn main() {
     // Test
-
-    // debug_assert!(part1("./input_sample_small.txt".into()).unwrap() == 999);
-
     debug_assert!(part1("./input_sample.txt".into()).unwrap() == 13140);
 
     // Part 1
@@ -23,12 +20,7 @@ fn main() {
     println!("Part1: {}", part1);
     debug_assert!(part1 == 15880); // Keep part 1 working.
 
-    // debug_assert!(part2("./input_sample.txt".into()) == 1);
-    // debug_assert!(part2("./input_sample2.txt".into()) == 36);
-
-    // let part2 = part2("./input.txt".into());
-    // println!("Part2: {}", part2);
-    // debug_assert!(part2 == 2793); // Keep part 2 working.
+    // Part2 sits so nicely inside part 1 - I didn't refactor.
 }
 #[derive(Debug, Default)]
 struct Cpu {
