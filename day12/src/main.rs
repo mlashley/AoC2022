@@ -71,6 +71,10 @@ fn part1(input_filename: String) -> usize {
     mymap[start.y][start.x]='a';
 
 
+    solve(&mymap,start,end)
+}
+
+fn solve(mymap: &Vec<Vec<char>>, start: Coord, end: Coord) -> usize {
     println!("Start: {:?} End: {:?}", start, end);
 
     let mut visited: HashSet<Coord> = HashSet::new();
@@ -109,6 +113,8 @@ fn part1(input_filename: String) -> usize {
     }   
     d[&end]
 }
+
+
 
 fn find_thing(m: &Vec<Vec<char>>, c: char) -> Result<Coord,String> {
     for (y,row)  in m.iter().enumerate() {
