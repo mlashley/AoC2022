@@ -1,15 +1,12 @@
 use std::cmp::Ordering;
 
+#[allow(clippy::box_collection)]
 #[derive(Debug, PartialEq)]
 enum Node {
     Leaf(i32),
     Inner(Box<Vec<Node>>),
 }
 
-// #[derive(Debug,PartialEq)]
-// struct Packet {
-//     node: Node,
-// }
 type Packet = Node;
 
 // If the thing is a number - append it as a leaf to the deepest array
@@ -43,7 +40,7 @@ impl Packet {
                 }
                 ' ' => {}
                 ',' => num = append_number(num, &mut parsetree),
-                // THere are 2 digit ints in the *true* input (but not the test-data, you fuckers...)
+                // There are 2 digit ints in the *true* input (but not the test-data, you fuckers...)
                 digit => num = Some(num.unwrap_or(0) * 10 + (digit.to_digit(10).unwrap()) as i32),
             };
         }
@@ -65,7 +62,7 @@ impl Packet {
                 left_list.len().cmp(&right_list.len()) // If we get here - one list is exhausted, left-done=good, right-done=bad.
             }
             (l, Node::Leaf(v)) => l.compare(&Node::Inner(Box::new(vec![Node::Leaf(*v)]))), // Left is vec, right is int, wrap int and compare
-            (Node::Leaf(v), l) => Node::Inner(Box::new(vec![Node::Leaf(*v)])).compare(&l), // ^^ opposite
+            (Node::Leaf(v), l) => Node::Inner(Box::new(vec![Node::Leaf(*v)])).compare(l), // ^^ opposite
         }
     }
 }
@@ -89,7 +86,6 @@ fn test() {
             std::fs::read_to_string("input_sample.txt")
                 .unwrap()
                 .as_str()
-                .into()
         )
     );
     debug_assert!(
@@ -97,7 +93,6 @@ fn test() {
             std::fs::read_to_string("input_sample.txt")
                 .unwrap()
                 .as_str()
-                .into()
         )
     );
 }
@@ -105,7 +100,7 @@ fn part1(data: &str) -> u32 {
     let nodes = data
         .split('\n')
         .filter(|l| !l.is_empty())
-        .map(|line| Packet::from_string(line))
+        .map(Packet::from_string)
         .collect::<Vec<_>>();
 
     // println!("{:?}",nodes);
@@ -135,7 +130,7 @@ fn part2(data: &str) -> usize {
         Packet::from_string("[[6]]"),
         Packet::from_string("[[2]]"),
     ]);
-    nodes.sort_by(|a, b| a.compare(&b));
+    nodes.sort_by(|a, b| a.compare(b));
 
     let looking_for = vec![Packet::from_string("[[6]]"), Packet::from_string("[[2]]")];
     let keys = (0..nodes.len())
