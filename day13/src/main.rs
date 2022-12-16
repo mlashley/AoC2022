@@ -24,7 +24,7 @@ impl Packet {
         let mut parsetree = vec![vec![]];
 
         // Loop thru chars, each time we see a new list, push a new whole empty vector onto the tree
-        // each time we see a number, stash it
+        // each time we see a number, stash it to see if another follows for >=10 ...
         // each time we see a comma - push the stashed number the deepest vector (level)
         // each time we close a bracket, push any stashed number, then, pop the deepest vector, and create new Node::Inner(v) of it to append to the new-deepest vector.
 
