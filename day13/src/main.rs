@@ -10,10 +10,10 @@ enum Node {
 // struct Packet {
 //     node: Node,
 // }
-type  Packet = Node;
+type Packet = Node;
 
 // If the thing is a number - append it as a leaf to the deepest array
-fn append_number (num: Option<i32>, parsetree: &mut Vec<Vec<Node>>) -> Option<i32> {
+fn append_number(num: Option<i32>, parsetree: &mut Vec<Vec<Node>>) -> Option<i32> {
     let lev = parsetree.len() - 1;
     if let Some(num) = num {
         parsetree[lev].push(Node::Leaf(num));
@@ -22,7 +22,6 @@ fn append_number (num: Option<i32>, parsetree: &mut Vec<Vec<Node>>) -> Option<i3
 }
 
 impl Packet {
-
     fn from_string(s: &str) -> Self {
         let mut num = None;
         let mut parsetree = vec![vec![]];
@@ -40,7 +39,7 @@ impl Packet {
                     num = append_number(num, &mut parsetree);
                     let v = parsetree.pop().unwrap();
                     let lev = parsetree.len();
-                    parsetree[lev-1].push(Node::Inner(Box::new(v)));
+                    parsetree[lev - 1].push(Node::Inner(Box::new(v)));
                 }
                 ' ' => {}
                 ',' => num = append_number(num, &mut parsetree),
@@ -48,12 +47,12 @@ impl Packet {
                 digit => num = Some(num.unwrap_or(0) * 10 + (digit.to_digit(10).unwrap()) as i32),
             };
         }
-        Node::Inner(Box::new(parsetree.pop().unwrap())) 
+        Node::Inner(Box::new(parsetree.pop().unwrap()))
     }
 
     fn compare(&self, other: &Node) -> Ordering {
         match (self, other) {
-            (Node::Leaf(left_val), Node::Leaf(right_val)) => (*left_val).cmp(right_val),  // Simple int compare
+            (Node::Leaf(left_val), Node::Leaf(right_val)) => (*left_val).cmp(right_val), // Simple int compare
             (Node::Inner(left_list), Node::Inner(right_list)) => {
                 let mut i = 0;
                 while i < left_list.len() && i < right_list.len() {
@@ -69,34 +68,45 @@ impl Packet {
             (Node::Leaf(v), l) => Node::Inner(Box::new(vec![Node::Leaf(*v)])).compare(&l), // ^^ opposite
         }
     }
-
 }
 
 fn test() {
-
     let mut p1 = Packet::from_string("[[1],[2,3,4]]");
-    println!("{:?}",p1);
+    println!("{:?}", p1);
 
     let mut p2 = Packet::from_string("[[1],4]");
-    println!("{:?}",p2);
+    println!("{:?}", p2);
     let r = p1.compare(&p2);
-    println!("{:?}",r);
+    println!("{:?}", r);
     debug_assert!(r == Ordering::Less);
 
     p1 = Packet::from_string("[9]");
     p2 = Packet::from_string("[[8,7,6]]");
-    debug_assert!(p1.compare(&p2) == Ordering::Greater );
+    debug_assert!(p1.compare(&p2) == Ordering::Greater);
 
-    debug_assert!(13 == part1(std::fs::read_to_string("input_sample.txt").unwrap().as_str().into()));
-
+    debug_assert!(
+        13 == part1(
+            std::fs::read_to_string("input_sample.txt")
+                .unwrap()
+                .as_str()
+                .into()
+        )
+    );
+    debug_assert!(
+        140 == part2(
+            std::fs::read_to_string("input_sample.txt")
+                .unwrap()
+                .as_str()
+                .into()
+        )
+    );
 }
 fn part1(data: &str) -> u32 {
-    
     let nodes = data
-         .split('\n')
-         .filter(|l| !l.is_empty())
-         .map(|line| Packet::from_string(line))
-         .collect::<Vec<_>>();
+        .split('\n')
+        .filter(|l| !l.is_empty())
+        .map(|line| Packet::from_string(line))
+        .collect::<Vec<_>>();
 
     // println!("{:?}",nodes);
 
@@ -106,18 +116,42 @@ fn part1(data: &str) -> u32 {
         i += 1;
         let r = pair[0].compare(&pair[1]);
         // println!("{} {:?}",i,r);
-        if r == Ordering::Less { result += i; }
+        if r == Ordering::Less {
+            result += i;
+        }
     }
     println!("Part1: {}", result);
     result
-
 }
 
+fn part2(data: &str) -> usize {
+    let mut nodes = data
+        .split('\n')
+        .filter(|l| !l.is_empty())
+        .map(Packet::from_string)
+        .collect::<Vec<_>>();
+
+    nodes.append(&mut vec![
+        Packet::from_string("[[6]]"),
+        Packet::from_string("[[2]]"),
+    ]);
+    nodes.sort_by(|a, b| a.compare(&b));
+
+    let looking_for = vec![Packet::from_string("[[6]]"), Packet::from_string("[[2]]")];
+    let keys = (0..nodes.len())
+        .filter(|&x| looking_for.contains(&nodes[x]))
+        .map(|i| i + 1)
+        .collect::<Vec<usize>>();
+
+    assert!(keys.len() == 2);
+
+    println!("Part2: {} * {} = {}", keys[0], keys[1], keys[0] * keys[1]);
+    keys[0] * keys[1]
+}
 
 fn main() {
     test();
     // for file in ["input_sample.txt", "input.txt"] {
-    assert!(part1(std::fs::read_to_string("input.txt").unwrap().as_str().into()) == 6656);
-    
+    assert!(part1(std::fs::read_to_string("input.txt").unwrap().as_str()) == 6656);
+    assert!(part2(std::fs::read_to_string("input.txt").unwrap().as_str()) == 19716);
 }
-
