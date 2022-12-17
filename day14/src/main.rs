@@ -77,6 +77,11 @@ impl Grid {
         let mut sand = Point { x: 500, y: 0 };
         let mut nextpoint = self.next_move(sand);
 
+        if self.g[0][500-self.xoffset] == Element::DeadSand {
+            println!("Cavern full...");
+            return false
+        }
+
         while nextpoint.is_some() {
             if nextpoint.unwrap().x == std::usize::MAX {
                 return false;
@@ -131,7 +136,7 @@ impl Point {
     }
 }
 
-fn part1(data: &str) -> u32 {
+fn part1(data: &str, part2: bool) -> u32 {
     // Parse lines
     let v_lines_points = data
         .split("\n")
@@ -143,7 +148,7 @@ fn part1(data: &str) -> u32 {
         })
         .collect::<Vec<Vec<Point>>>();
 
-    let lines = v_lines_points
+    let mut lines = v_lines_points
         .iter()
         .map(|x| {
             let mut last = None;
@@ -161,25 +166,34 @@ fn part1(data: &str) -> u32 {
         })
         .collect::<Vec<Vec<Line>>>();
 
-    let maxy = lines
+    let mut maxy = lines
         .iter()
         .flatten()
         .map(|a| a.start.y.max(a.end.y))
         .max()
         .unwrap();
     let miny = 0; // We always have the sand-emitter in view
-    let maxx = lines
+    let mut maxx = lines
         .iter()
         .flatten()
         .map(|a| a.start.x.max(a.end.x))
         .max()
         .unwrap();
-    let minx = lines
+    let mut minx = lines
         .iter()
         .flatten()
         .map(|a| a.start.x.min(a.end.x))
         .min()
         .unwrap();
+
+    if part2 {
+        minx = 300;
+        maxx = 700;
+        maxy += 2;
+        let mut line: Vec<Line> = Vec::new();
+        // line.push(Line { start: Point{ x: minx, y: maxy }, end: Point{ x: maxx, y: maxy }  });
+        lines.push(vec![Line { start: Point{ x: minx, y: maxy }, end: Point{ x: maxx, y: maxy }  }]);
+    }
     let width = (maxx - minx) + 1;
     let height = (maxy - miny) + 1;
     println!("min x,y => max x,y: {},{} => {},{}", minx, miny, maxx, maxy);
@@ -202,9 +216,17 @@ fn part1(data: &str) -> u32 {
     }
 
     // Go Sand
+    let mut skip = 0;
     while grid.add_sand() {
-        println!("{}", grid);
+        // Uncomment to watch some progress...
+        // skip +=1;
+        // if skip == 20 {
+        //     println!("{}", grid);
+        //     skip = 0;
+        // }
     }
+    println!("{}", grid);
+
     grid.count_sand()
 }
 
@@ -213,14 +235,25 @@ fn test() {
         24 == part1(
             std::fs::read_to_string("input_sample.txt")
                 .unwrap()
-                .as_str()
+                .as_str(), false
+        )
+    );
+    debug_assert!(
+        93 == part1(
+            std::fs::read_to_string("input_sample.txt")
+                .unwrap()
+                .as_str(), true
         )
     );
 }
 
 fn main() {
     test();
-    let p1 = part1(std::fs::read_to_string("input.txt").unwrap().as_str());
+    let p1 = part1(std::fs::read_to_string("input.txt").unwrap().as_str(),false);
     println!("Part1: {}", p1);
     assert!(p1 == 578);
+    let p2 = part1(std::fs::read_to_string("input.txt").unwrap().as_str(),true);
+    println!("Part2: {}", p2);
+    assert!(p2 == 24377);
+
 }
