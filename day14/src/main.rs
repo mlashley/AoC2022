@@ -4,7 +4,6 @@ use std::fmt;
 enum Element {
     Air,
     Rock,
-    ActiveSand,
     DeadSand,
 }
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
@@ -77,9 +76,9 @@ impl Grid {
         let mut sand = Point { x: 500, y: 0 };
         let mut nextpoint = self.next_move(sand);
 
-        if self.g[0][500-self.xoffset] == Element::DeadSand {
+        if self.g[0][500 - self.xoffset] == Element::DeadSand {
             println!("Cavern full...");
-            return false
+            return false;
         }
 
         while nextpoint.is_some() {
@@ -113,7 +112,6 @@ impl fmt::Display for Grid {
                 match e {
                     Element::Air => s.push('.'),
                     Element::Rock => s.push('#'),
-                    Element::ActiveSand => s.push('+'),
                     Element::DeadSand => s.push('o'),
                 }
             }
@@ -131,7 +129,7 @@ impl fmt::Display for Point {
 
 impl Point {
     fn from_string(s: &str) -> Self {
-        let a: Vec<usize> = s.split(",").map(|x| x.parse().unwrap()).collect();
+        let a: Vec<usize> = s.split(',').map(|x| x.parse().unwrap()).collect();
         Point { x: a[0], y: a[1] }
     }
 }
@@ -139,7 +137,7 @@ impl Point {
 fn part1(data: &str, part2: bool) -> u32 {
     // Parse lines
     let v_lines_points = data
-        .split("\n")
+        .split('\n')
         .map(|x| {
             x.split(" -> ")
                 .filter(|y| !y.is_empty())
@@ -190,9 +188,10 @@ fn part1(data: &str, part2: bool) -> u32 {
         minx = 300;
         maxx = 700;
         maxy += 2;
-        let mut line: Vec<Line> = Vec::new();
-        // line.push(Line { start: Point{ x: minx, y: maxy }, end: Point{ x: maxx, y: maxy }  });
-        lines.push(vec![Line { start: Point{ x: minx, y: maxy }, end: Point{ x: maxx, y: maxy }  }]);
+        lines.push(vec![Line {
+            start: Point { x: minx, y: maxy },
+            end: Point { x: maxx, y: maxy },
+        }]);
     }
     let width = (maxx - minx) + 1;
     let height = (maxy - miny) + 1;
@@ -205,7 +204,7 @@ fn part1(data: &str, part2: bool) -> u32 {
         xoffset: minx,
     };
     for _row in miny..=maxy {
-        grid.g.push(vec![Element::Air; width.try_into().unwrap()]);
+        grid.g.push(vec![Element::Air; width]);
     }
 
     // Draw Rocks
@@ -216,9 +215,11 @@ fn part1(data: &str, part2: bool) -> u32 {
     }
 
     // Go Sand
-    let mut skip = 0;
+
+    // Uncomment this and inner to watch some progress...
+    // let mut skip = 0;
     while grid.add_sand() {
-        // Uncomment to watch some progress...
+
         // skip +=1;
         // if skip == 20 {
         //     println!("{}", grid);
@@ -235,25 +236,29 @@ fn test() {
         24 == part1(
             std::fs::read_to_string("input_sample.txt")
                 .unwrap()
-                .as_str(), false
+                .as_str(),
+            false
         )
     );
     debug_assert!(
         93 == part1(
             std::fs::read_to_string("input_sample.txt")
                 .unwrap()
-                .as_str(), true
+                .as_str(),
+            true
         )
     );
 }
 
 fn main() {
     test();
-    let p1 = part1(std::fs::read_to_string("input.txt").unwrap().as_str(),false);
+    let p1 = part1(
+        std::fs::read_to_string("input.txt").unwrap().as_str(),
+        false,
+    );
     println!("Part1: {}", p1);
     assert!(p1 == 578);
-    let p2 = part1(std::fs::read_to_string("input.txt").unwrap().as_str(),true);
+    let p2 = part1(std::fs::read_to_string("input.txt").unwrap().as_str(), true);
     println!("Part2: {}", p2);
     assert!(p2 == 24377);
-
 }
