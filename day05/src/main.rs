@@ -3,9 +3,20 @@ use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use ansi_escapes;
+use std::{thread, time};
 
 fn main() {
-    if let Ok(lines) = read_lines("./input.txt") {
+    let p1 = solve("./input.txt",true);
+    println!("Part1: {}",p1);
+    assert!(p1 == "LBLVVTVLP");
+    let p2 = solve("./input.txt",false);
+    println!("Part2: {}",p2);
+    assert!(p2 == "TPFFBDRJD");
+}
+
+fn solve(filename: &str, is_part1: bool) -> String {
+    if let Ok(lines) = read_lines(filename) {
         let layout_re = Regex::new(r"^(\[[A-Z]\]|\s\s\s\s)").unwrap();
         let digit_re = Regex::new(r"(\d+)").unwrap();
 
@@ -15,17 +26,14 @@ fn main() {
         for line in lines.flatten() {
             if !layoutdone && layout_re.is_match(line.as_str()) {
                 let c = line.chars().collect::<Vec<char>>();
-                let l = line.len();
+                let l = line.len()+1;
                 if board.is_empty() {
                     // Initialize size as linelen+1 / 4
-                    for _i in 0..(l + 1) / 4 {
+                    for _i in 0..l / 4 {
                         board.push(VecDeque::new());
                     }
                 }
-                println!("l:{} boardlen:{}", l, board.len());
-
                 for i in (1..l).step_by(4) {
-                    print!("{}[{}] ", c[i], (i - 1) / 4);
                     if c[i] != ' ' {
                         board[(i - 1) / 4].push_front(c[i]);
                     }
@@ -44,15 +52,21 @@ fn main() {
                         .map(|s| s.as_str().parse().unwrap())
                         .collect::<Vec<usize>>();
                     let (count, from, to) = (digits[0], digits[1], digits[2]);
-                    println!("Move {} from {} to {}", count, from, to);
-                    // move_cargo(&mut board, from, to, count);
-                    move_cargo_part2(&mut board, from, to, count);
-                    print_board(&board);
+//                    println!("{}Move {} from {} to {}", ansi_escapes::ClearScreen,count, from, to);
+                    if is_part1 {
+                        move_cargo(&mut board, from, to, count);
+                    } else {
+                        move_cargo_part2(&mut board, from, to, count);
+                    }
+//                    print_board(&board);
+//                    thread::sleep(time::Duration::from_millis(100));
+
                 }
             }
         }
-        board_top(&board);
+        return board_top(&board);
     }
+    panic!("Couldn't read file");
 }
 
 
@@ -85,11 +99,8 @@ fn move_cargo_part2(board: &mut [VecDeque<char>], from: usize, to: usize, count:
     }
 }
 
-fn board_top(board: &Vec<VecDeque<char>>) {
-    for row in board {
-        print!("{}", row[row.len() - 1]);
-    }
-    println!();
+fn board_top(board: &[VecDeque<char>]) -> String {
+    board.iter().map(|x| x[x.len() -1]).collect::<String>()
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
