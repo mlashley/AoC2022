@@ -1,4 +1,3 @@
-// use itertools::Itertools;
 use parse_display::{Display, FromStr};
 
 #[derive(Display, FromStr, Clone, Debug, PartialEq)]
@@ -65,6 +64,10 @@ fn test() {
     debug_assert!(a.get_x_range(0) == Some((6, 10)));
     debug_assert!(a.get_x_range(15) == Some((7, 9)));
 
+    debug_assert!(merge(vec![(-5, 5), (4, 7), (9, 10)]) == vec![(-5, 7), (9, 10)]);
+    debug_assert!(merge(vec![(-5, 5), (4, 9), (9, 10)]) == vec![(-5, 10)]);
+    debug_assert!(merge(vec![(-5, 5), (6, 9), (9, 10)]) == vec![(-5, 10)]);
+
     debug_assert!(
         part1(
             std::fs::read_to_string("input_sample.txt")
@@ -72,6 +75,14 @@ fn test() {
                 .as_str(),
             10
         ) == 26
+    );
+    debug_assert!(
+        part2(
+            std::fs::read_to_string("input_sample.txt")
+                .unwrap()
+                .as_str(),
+            20
+        ) == 56000011
     );
 }
 
@@ -133,6 +144,52 @@ fn part1(data: &str, row: i32) -> usize {
     output.len() - (beacons_on_this_row + sensors_on_this_row)
 }
 
+fn part2(data: &str, dim: usize) -> usize {
+    let ranges = data
+        .split('\n')
+        .filter(|y| !y.is_empty())
+        .map(|x| x.parse::<SensorBeacon>().unwrap())
+        .collect::<Vec<SensorBeacon>>();
+
+    // I'm fairly sure there is a less brute-ish solution involving the fact that
+    // in order to to form a gap, the rhombi must have specific properties
+    // But this runs in under a second, and I'm 3 days behind - so... :)
+    for row in 0..=dim {
+        let mut xranges = ranges
+            .iter()
+            .filter_map(|x| x.get_x_range(row as i32))
+            .collect::<Vec<(i32, i32)>>();
+
+        xranges.sort();
+        let m = merge(xranges);
+        for range in m {
+            if range.0 <= 0 && range.1 >= dim.try_into().unwrap() {
+                // Completely Covered
+            } else if range.1 >= 0 && range.1 <= dim.try_into().unwrap() {
+                println!("Distress on row: {}, x: {} ", row, range.1 + 1);
+                return (range.1 as usize + 1) * 4000000 + row;
+            }
+        }
+    }
+    0
+}
+
+fn merge(v: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
+    v.iter().fold(vec![], |mut acc, x| {
+        if acc.is_empty() {
+            acc.push(*x);
+        } else if acc.last().unwrap().1 >= (x.0 - 1) && acc.last().unwrap().0 <= x.0 {
+            let mut t = acc.pop().unwrap();
+            t.1 = x.1.max(t.1);
+            acc.push(t)
+        } else {
+            // Does not overlap
+            acc.push(*x);
+        }
+        acc
+    })
+}
+
 fn main() {
     test();
     let p1 = part1(
@@ -141,6 +198,12 @@ fn main() {
     );
     println!("Part1: {}", p1);
     assert!(p1 == 5176944);
+    let p2 = part2(
+        std::fs::read_to_string("input.txt").unwrap().as_str(),
+        4000000,
+    );
+    println!("Part2: {}", p2);
+    assert!(p2 == 13350458933732);
 }
 
 // See also.
