@@ -1,17 +1,17 @@
+use ansi_escapes;
 use regex::Regex;
 use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use ansi_escapes;
 use std::{thread, time};
 
 fn main() {
-    let p1 = solve("./input.txt",true);
-    println!("Part1: {}",p1);
+    let p1 = solve("./input.txt", true);
+    println!("Part1: {}", p1);
     assert!(p1 == "LBLVVTVLP");
-    let p2 = solve("./input.txt",false);
-    println!("Part2: {}",p2);
+    let p2 = solve("./input.txt", false);
+    println!("Part2: {}", p2);
     assert!(p2 == "TPFFBDRJD");
 }
 
@@ -26,7 +26,7 @@ fn solve(filename: &str, is_part1: bool) -> String {
         for line in lines.flatten() {
             if !layoutdone && layout_re.is_match(line.as_str()) {
                 let c = line.chars().collect::<Vec<char>>();
-                let l = line.len()+1;
+                let l = line.len() + 1;
                 if board.is_empty() {
                     // Initialize size as linelen+1 / 4
                     for _i in 0..l / 4 {
@@ -52,15 +52,14 @@ fn solve(filename: &str, is_part1: bool) -> String {
                         .map(|s| s.as_str().parse().unwrap())
                         .collect::<Vec<usize>>();
                     let (count, from, to) = (digits[0], digits[1], digits[2]);
-//                    println!("{}Move {} from {} to {}", ansi_escapes::ClearScreen,count, from, to);
+                    // println!("{}Move {} from {} to {}", ansi_escapes::ClearScreen,count, from, to);
                     if is_part1 {
                         move_cargo(&mut board, from, to, count);
                     } else {
                         move_cargo_part2(&mut board, from, to, count);
                     }
-//                    print_board(&board);
-//                    thread::sleep(time::Duration::from_millis(100));
-
+                    // print_board(&board);
+                    // thread::sleep(time::Duration::from_millis(100));
                 }
             }
         }
@@ -68,8 +67,6 @@ fn solve(filename: &str, is_part1: bool) -> String {
     }
     panic!("Couldn't read file");
 }
-
-
 
 //fn print_board(board: &Vec<VecDeque<char>>) { // cargo-clippy says the below is 'better' - I need to understand why.
 fn print_board(board: &[VecDeque<char>]) {
@@ -100,7 +97,7 @@ fn move_cargo_part2(board: &mut [VecDeque<char>], from: usize, to: usize, count:
 }
 
 fn board_top(board: &[VecDeque<char>]) -> String {
-    board.iter().map(|x| x[x.len() -1]).collect::<String>()
+    board.iter().map(|x| x[x.len() - 1]).collect::<String>()
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
