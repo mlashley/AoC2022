@@ -24,19 +24,23 @@ fn main() {
 
             let round_score = score_part1(seen, to_play);
             total_score += round_score;
-            println!(
-                "Part 1 {} => {} round score {} total score {}",
-                seen, to_play, round_score, total_score
-            );
+            // println!(
+            //     "Part 1 {} => {} round score {} total score {}",
+            //     seen, to_play, round_score, total_score
+            // );
 
             let part2_play = what_to_play(seen, to_play);
             let round2_score = score_part1(seen, part2_play);
             total_score_part2 += round2_score;
-            println!(
-                "Part 2 {} => {}/{} round score {} total score {}",
-                seen, to_play, part2_play, round2_score, total_score_part2
-            );
+            // println!(
+            //     "Part 2 {} => {}/{} round score {} total score {}",
+            //     seen, to_play, part2_play, round2_score, total_score_part2
+            // );
         }
+        println!("Part1: {}", total_score);
+        println!("Part2: {}", total_score_part2);
+        assert!(total_score == 13924);
+        assert!(total_score_part2 == 13448);
     } else {
         println!("Error openening input...");
     }
