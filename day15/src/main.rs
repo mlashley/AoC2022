@@ -38,105 +38,32 @@ impl SensorBeacon {
 }
 
 fn test() {
-    let sb: SensorBeacon = "Sensor at x=2, y=18: closest beacon is at x=-2, y=15"
-        .parse()
-        .unwrap();
     debug_assert!(
-        sb == SensorBeacon {
-            sensor_x: 2,
-            sensor_y: 18,
-            beacon_x: -2,
-            beacon_y: 15
-        }
+        "Sensor at x=2, y=18: closest beacon is at x=-2, y=15"
+            .parse::<SensorBeacon>()
+            .unwrap()
+            == SensorBeacon {
+                sensor_x: 2,
+                sensor_y: 18,
+                beacon_x: -2,
+                beacon_y: 15
+            }
     );
-    debug_assert!(
-        SensorBeacon {
-            sensor_x: 8,
-            sensor_y: 7,
-            beacon_x: 2,
-            beacon_y: 10
-        }
-        .radius()
-            == 9
-    );
-    debug_assert!(
-        SensorBeacon {
-            sensor_x: 8,
-            sensor_y: 7,
-            beacon_x: 2,
-            beacon_y: 10
-        }
-        .in_row(-2)
-            == Some(1)
-    );
-    debug_assert!(
-        SensorBeacon {
-            sensor_x: 8,
-            sensor_y: 7,
-            beacon_x: 2,
-            beacon_y: 10
-        }
-        .in_row(6)
-            == Some(17)
-    );
-    debug_assert!(
-        SensorBeacon {
-            sensor_x: 8,
-            sensor_y: 7,
-            beacon_x: 2,
-            beacon_y: 10
-        }
-        .in_row(7)
-            == Some(19)
-    );
-    debug_assert!(
-        SensorBeacon {
-            sensor_x: 8,
-            sensor_y: 7,
-            beacon_x: 2,
-            beacon_y: 10
-        }
-        .in_row(8)
-            == Some(17)
-    );
-    debug_assert!(
-        SensorBeacon {
-            sensor_x: 8,
-            sensor_y: 7,
-            beacon_x: 2,
-            beacon_y: 10
-        }
-        .in_row(16)
-            == Some(1)
-    );
-    debug_assert!(SensorBeacon {
+    let a = SensorBeacon {
         sensor_x: 8,
         sensor_y: 7,
         beacon_x: 2,
-        beacon_y: 10
-    }
-    .in_row(17)
-    .is_none());
-    debug_assert!(
-        SensorBeacon {
-            sensor_x: 8,
-            sensor_y: 7,
-            beacon_x: 2,
-            beacon_y: 10
-        }
-        .get_x_range(0)
-            == Some((6, 10))
-    );
-    debug_assert!(
-        SensorBeacon {
-            sensor_x: 8,
-            sensor_y: 7,
-            beacon_x: 2,
-            beacon_y: 10
-        }
-        .get_x_range(15)
-            == Some((7, 9))
-    );
+        beacon_y: 10,
+    };
+    debug_assert!(a.radius() == 9);
+    debug_assert!(a.in_row(-2) == Some(1));
+    debug_assert!(a.in_row(6) == Some(17));
+    debug_assert!(a.in_row(7) == Some(19));
+    debug_assert!(a.in_row(8) == Some(17));
+    debug_assert!(a.in_row(16) == Some(1));
+    debug_assert!(a.in_row(17).is_none());
+    debug_assert!(a.get_x_range(0) == Some((6, 10)));
+    debug_assert!(a.get_x_range(15) == Some((7, 9)));
 
     debug_assert!(
         part1(
