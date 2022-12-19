@@ -26,31 +26,29 @@ impl Sub for Cube {
 
 impl Cube {
     fn touching(&self, other: &Self) -> bool {
-        match *self-*other {
-            Cube { x: 1, y: 0, z: 0} => true,
-            Cube { x: -1, y: 0, z: 0} => true,
-            Cube { x: 0, y: 1, z: 0} => true,
-            Cube { x: 0, y: -1, z: 0} => true,
-            Cube { x: 0, y: 0, z: 1} => true,
-            Cube { x: 0, y: 0, z: -1} => true,
-            _ => false,
-        }
+        matches!(
+            *self - *other,
+            Cube { x: 1, y: 0, z: 0 }
+                | Cube { x: -1, y: 0, z: 0 }
+                | Cube { x: 0, y: 1, z: 0 }
+                | Cube { x: 0, y: -1, z: 0 }
+                | Cube { x: 0, y: 0, z: 1 }
+                | Cube { x: 0, y: 0, z: -1 }
+        )
     }
 }
 
 fn test() {
-
     let c1 = "1,1,1".parse::<Cube>().unwrap();
     let c2 = "1,2,1".parse::<Cube>().unwrap();
     let c3 = "0,1,0".parse::<Cube>().unwrap();
-    println!("c2 {} - c1 {} = {:?}",c2,c1,c2-c1,);
+    println!("c2 {} - c1 {} = {:?}", c2, c1, c2 - c1,);
     debug_assert!(c1 != c2);
-    debug_assert!(c2-c1 == c3);
+    debug_assert!(c2 - c1 == c3);
     debug_assert!(c2.touching(&c1));
     debug_assert!(c1.touching(&c2));
     debug_assert!(!c1.touching(&c3));
     debug_assert!(!c3.touching(&c1));
-
 
     debug_assert!(
         part1(
@@ -68,29 +66,34 @@ fn test() {
     //         true
     //     ) == 1707
     // );
-
 }
 
 fn part1(data: &str, is_part2: bool) -> usize {
-
     let mut cubes: Vec<Cube> = data
         .split('\n')
         .filter(|y| !y.is_empty())
         .map(|x| x.parse::<Cube>().unwrap())
         .collect();
     cubes.sort();
-    
+
     let all_sides = cubes.len() * 6;
 
     let mut touching_sides = 0;
     cubes.iter().for_each(|i| {
         cubes.iter().for_each(|j| {
-            if i.touching(&j) { touching_sides += 1 };
+            if i.touching(j) {
+                touching_sides += 1
+            };
         })
     });
-    
-    println!("Total Sides {} - Touching Sides {} == {}",all_sides,touching_sides, all_sides-touching_sides);
-    all_sides-touching_sides
+
+    println!(
+        "Total Sides {} - Touching Sides {} == {}",
+        all_sides,
+        touching_sides,
+        all_sides - touching_sides
+    );
+    all_sides - touching_sides
 }
 
 fn main() {
