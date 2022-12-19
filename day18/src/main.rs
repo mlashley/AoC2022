@@ -1,10 +1,7 @@
-// use itertools::Itertools;
 use parse_display::{Display, FromStr};
-use std::collections::HashMap;
-use std::ops::Sub;
-
-// use std::cmp;
-// use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::ops::{Add, Sub};
+use std::vec;
 
 #[derive(Display, FromStr, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[display(r"{x},{y},{z}")]
@@ -21,6 +18,18 @@ impl Sub for Cube {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
+        }
+    }
+}
+
+impl Add for Cube {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
         }
     }
 }
@@ -56,6 +65,14 @@ impl Cube {
             Cube { x: 0, y: 0, z: -1 } => Some(Faces::Front as u8),
             _ => None,
         }
+    }
+    fn in_bounds(&self, lower: &Self, upper: &Self) -> bool {
+        self.x < lower.x
+            || self.y < lower.y
+            || self.z < lower.z
+            || self.x > upper.x
+            || self.y > upper.y
+            || self.z > upper.z
     }
 }
 
@@ -116,6 +133,95 @@ fn part1(data: &str) -> usize {
 }
 
 fn part2(data: &str) -> u32 {
+    let cubes: Vec<Cube> = data
+        .split('\n')
+        .filter(|y| !y.is_empty())
+        .map(|x| x.parse::<Cube>().unwrap())
+        .collect();
+
+    // We're going to bound a volume (xmin-1,ymin-1,zmin-1)-(xmax+1,ymax+1,zmax+1)
+    // Starting a single cube in the corner iterate thru all of them seeing where we can move..
+    // Touching edges until we fill the space
+
+    let wiggle = 2;
+
+    let xmin = cubes.iter().map(|c| c.x).min().unwrap() - wiggle;
+    let xmax = cubes.iter().map(|c| c.x).max().unwrap() + wiggle;
+    let ymin = cubes.iter().map(|c| c.y).min().unwrap() - wiggle;
+    let ymax = cubes.iter().map(|c| c.y).max().unwrap() + wiggle;
+    let zmin = cubes.iter().map(|c| c.z).min().unwrap() - wiggle;
+    let zmax = cubes.iter().map(|c| c.z).max().unwrap() + wiggle;
+
+    let lowerbound = Cube {
+        x: xmin,
+        y: ymin,
+        z: zmin,
+    };
+    let upperbound = Cube {
+        x: xmax,
+        y: ymax,
+        z: zmax,
+    };
+
+    // using a bitmask of each side.
+    let mut sides_touched: HashMap<Cube, u8> = cubes.iter().map(|x| (*x, 0)).collect();
+    assert!(sides_touched.keys().len() == cubes.len());
+    let mut visited: HashSet<Cube> = HashSet::new();
+
+    let start = Cube {
+        x: xmin,
+        y: ymin,
+        z: zmin,
+    };
+    let mut q: VecDeque<Cube> = std::iter::once(start).collect();
+
+    let mut guard = (1 + xmax - xmin) * (1 + ymax - ymin) * (1 + zmax - zmin);
+
+    // This may look a bunch like some code in Day12...
+    while let Some(c) = q.pop_front() {
+        if !visited.insert(c) {
+            // Already visited
+            continue;
+        }
+        if c.in_bounds(&lowerbound, &upperbound) {
+            continue;
+        }
+        guard -= 1;
+        assert!(guard > 0);
+
+        // Test if this position touches any cube in the object
+        for other in cubes.iter() {
+            if let Some(r) = other.touches_sides(&c) {
+                sides_touched.entry(*other).and_modify(|mask| *mask |= r);
+            }
+        }
+
+        // Figure out next positions (very verbosely...)
+
+        let left = c + Cube { x: -1, y: 0, z: 0 };
+        let right = c + Cube { x: 1, y: 0, z: 0 };
+        let up = c + Cube { x: 0, y: 1, z: 0 };
+        let down = c + Cube { x: 0, y: -1, z: 0 };
+        let back = c + Cube { x: 0, y: 0, z: 1 };
+        let front = c + Cube { x: 0, y: 0, z: -1 };
+
+        let possible = vec![left, right, up, down, back, front];
+
+        for p in possible {
+            if !cubes.iter().any(|x| *x == p) {
+                q.push_back(p);
+            }
+        }
+    }
+
+    let outsides: u32 = sides_touched.iter().map(|(_, v)| v.count_ones()).sum();
+
+    outsides
+}
+
+// This was naive, (at least after I rendered the shape in blender) but it may be useful at some point.
+#[allow(dead_code)]
+fn part2_failed_attempt(data: &str) -> u32 {
     let mut cubes: Vec<Cube> = data
         .split('\n')
         .filter(|y| !y.is_empty())
@@ -123,7 +229,7 @@ fn part2(data: &str) -> u32 {
         .collect();
 
     // using a bitmask of each side.
-    let mut sidesTouchedMap: HashMap<Cube, u8> = cubes.iter().map(|x| (*x, 0)).collect();
+    let mut sides_touched: HashMap<Cube, u8> = cubes.iter().map(|x| (*x, 0)).collect();
 
     cubes.sort();
 
@@ -146,14 +252,18 @@ fn part2(data: &str) -> u32 {
         for y in ymin - 1..=ymax + 1 {
             // Loop along z in positive direction until we touch
             'nextcube: for z in zmin - 2..=zmax + 2 {
+                let mut should_break = false;
                 let testcube = Cube { x, y, z };
                 for other in cubes.iter() {
-                    if let Some(r) = other.touches_sides(&testcube) {                        
-                        sidesTouchedMap.entry(*other).and_modify(|mask| *mask |= r);
+                    if let Some(r) = other.touches_sides(&testcube) {
+                        sides_touched.entry(*other).and_modify(|mask| *mask |= r);
                         if r == Faces::Front as u8 {
-                            break 'nextcube;
+                            should_break = true;
                         }
                     };
+                }
+                if should_break {
+                    break 'nextcube;
                 }
             }
         }
@@ -164,14 +274,18 @@ fn part2(data: &str) -> u32 {
         for y in ymin - 1..=ymax + 1 {
             // Loop along z in negative direction until we touch
             'nextcube: for z in (zmin - 2..=zmax + 2).rev() {
+                let mut should_break = false;
                 let testcube = Cube { x, y, z };
                 for other in cubes.iter() {
                     if let Some(r) = other.touches_sides(&testcube) {
-                        sidesTouchedMap.entry(*other).and_modify(|mask| *mask |= r);
+                        sides_touched.entry(*other).and_modify(|mask| *mask |= r);
                         if r == Faces::Back as u8 {
-                            break 'nextcube;
+                            should_break = true;
                         }
                     };
+                }
+                if should_break {
+                    break 'nextcube;
                 }
             }
         }
@@ -181,14 +295,18 @@ fn part2(data: &str) -> u32 {
     for z in zmin - 1..=zmax + 1 {
         for y in ymin - 1..=ymax + 1 {
             'nextcube: for x in xmin - 2..=xmax + 2 {
+                let mut should_break = false;
                 let testcube = Cube { x, y, z };
                 for other in cubes.iter() {
-                    if let Some(r) = other.touches_sides(&testcube) {  
-                        sidesTouchedMap.entry(*other).and_modify(|mask| *mask |= r);
+                    if let Some(r) = other.touches_sides(&testcube) {
+                        sides_touched.entry(*other).and_modify(|mask| *mask |= r);
                         if r == Faces::Left as u8 {
-                            break 'nextcube;
+                            should_break = true;
                         }
                     };
+                }
+                if should_break {
+                    break 'nextcube;
                 }
             }
         }
@@ -199,13 +317,17 @@ fn part2(data: &str) -> u32 {
         for y in ymin - 1..=ymax + 1 {
             'nextcube: for x in (xmin - 2..=xmax + 2).rev() {
                 let testcube = Cube { x, y, z };
+                let mut should_break = false;
                 for other in cubes.iter() {
-                    if let Some(r) = other.touches_sides(&testcube) { 
-                        sidesTouchedMap.entry(*other).and_modify(|mask| *mask |= r);
+                    if let Some(r) = other.touches_sides(&testcube) {
+                        sides_touched.entry(*other).and_modify(|mask| *mask |= r);
                         if r == Faces::Right as u8 {
-                            break 'nextcube;
+                            should_break = true;
                         }
                     };
+                }
+                if should_break {
+                    break 'nextcube;
                 }
             }
         }
@@ -215,15 +337,19 @@ fn part2(data: &str) -> u32 {
     for z in zmin - 1..=zmax + 1 {
         for x in xmin - 1..=xmax + 1 {
             'nextcube: for y in ymin - 2..=ymax + 2 {
+                let mut should_break = false;
                 let testcube = Cube { x, y, z };
                 for other in cubes.iter() {
                     if let Some(r) = other.touches_sides(&testcube) {
                         println!("tgt {} test {} r {}", other, testcube, r);
-                        sidesTouchedMap.entry(*other).and_modify(|mask| *mask |= r);
+                        sides_touched.entry(*other).and_modify(|mask| *mask |= r);
                         if r == Faces::Bottom as u8 {
-                            break 'nextcube;
+                            should_break = true;
                         }
                     };
+                }
+                if should_break {
+                    break 'nextcube;
                 }
             }
         }
@@ -232,24 +358,27 @@ fn part2(data: &str) -> u32 {
     // project:  along=x in reverse direction
     for z in zmin - 1..=zmax + 1 {
         for x in xmin - 1..=xmax + 1 {
-
             'nextcube: for y in (ymin - 2..=ymax + 2).rev() {
+                let mut should_break = false;
                 let testcube = Cube { x, y, z };
                 for other in cubes.iter() {
                     if let Some(r) = other.touches_sides(&testcube) {
                         println!("tgt {} test {} r {}", other, testcube, r);
-                        sidesTouchedMap.entry(*other).and_modify(|mask| *mask |= r);
+                        sides_touched.entry(*other).and_modify(|mask| *mask |= r);
                         if r == Faces::Top as u8 {
-                            break 'nextcube;
+                            should_break = true;
                         }
                     };
+                }
+                if should_break {
+                    break 'nextcube;
                 }
             }
         }
     }
 
-    println!("{:?}", sidesTouchedMap);
-    let outsides: u32 = sidesTouchedMap.iter().map(|(c, v)| v.count_ones()).sum();
+    println!("{:?}", sides_touched);
+    let outsides: u32 = sides_touched.iter().map(|(_, v)| v.count_ones()).sum();
     println!("Outsides: {}", outsides);
 
     outsides
@@ -262,8 +391,5 @@ fn main() {
     assert!(p1 == 3576);
     let p2 = part2(std::fs::read_to_string("input.txt").unwrap().as_str());
     println!("Part2: {}", p2);
-
-    // 1882 is too low.
-
-    // assert!(p2 == 2520);
+    assert!(p2 == 2066); // 1882 is too low.     // 2031 is too low.
 }
