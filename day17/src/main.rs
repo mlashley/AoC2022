@@ -20,6 +20,7 @@ static ROCKS: [RocksEnum; 5] = [
 ];
 
 impl Board {
+    #[allow(dead_code)]
     fn get_height(&self) -> usize {
         self.data.len()
     }
@@ -51,12 +52,14 @@ impl Board {
         }
         top_rock + 3
     }
+    #[allow(dead_code)]
     fn display(&self) {
         for row in self.data.iter().rev() {
             println!("{:07b}", row);
         }
         println!("========");
     }
+    #[allow(dead_code)]
     fn display_over(&self, r: &Rock) {
         let mut temp = self.data.clone();
 
@@ -186,6 +189,7 @@ fn test() {
     debug_assert!(Rock::height_from_enum(RocksEnum::Square) == 2);
     debug_assert!(Rock::height_from_enum(RocksEnum::VertLine) == 4);
 
+    #[allow(unused_mut)]
     let mut r = Rock::init_from_enum(RocksEnum::VertLine, 3);
     debug_assert!(
         r == Rock {
