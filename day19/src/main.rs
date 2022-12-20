@@ -195,9 +195,9 @@ pub fn main() -> Result<(), Error> {
     let p1 = part1(std::fs::read_to_string("input.txt").unwrap().as_str());
     println!("Part1: {}", p1);
     assert!(p1 == 1413);
-    // let p2 = part2(std::fs::read_to_string("input.txt").unwrap().as_str());
-    // println!("Part2: {}", p2);
-    // assert!(p2 == ?? );
+    let p2 = part2(std::fs::read_to_string("input.txt").unwrap().as_str());
+    println!("Part2: {}", p2);
+    assert!(p2 == 21080);
     println!("Completed in {} us", now.elapsed().as_micros());
     Ok(())
 }
@@ -218,14 +218,15 @@ fn test() {
                 .as_str(),
         ) == 33
     );
-    // debug_assert!(
-    //     part2(
-    //         std::fs::read_to_string("input_sample.txt")
-    //             .unwrap()
-    //             .as_str(),
-    //     ) == 62
-    // );
 
+    println!("This should be 56 and 62, respectively");
+    assert!(
+        part2(
+            std::fs::read_to_string("input_sample.txt")
+                .unwrap()
+                .as_str(),
+        ) == 56 * 62
+    );
     println!("======== END TESTS ===========");
 }
 
@@ -256,6 +257,33 @@ fn part1(data: &str) -> u64 {
         .sum()
 }
 
+fn part2(data: &str) -> u64 {
+    let blueprints: Vec<Blueprint> = data
+        .split('\n')
+        .filter(|y| !y.is_empty())
+        // .inspect((|x| println!("{}",x)))
+        .map(|x| x.parse::<Blueprint>().unwrap())
+        .map(|mut bp| {
+            bp.enhance();
+            bp
+        })
+        .collect();
+
+    blueprints
+        .par_iter()
+        .take(3)
+        .enumerate()
+        .map(|(idx, d)| {
+            let state: State = State::new(32);
+            let mut cache: HashMap<State, u32> = Default::default();
+            let mut best: u32 = 0;
+            let score = get_best_score(state, d, 0, &mut best, &mut cache) as u64;
+            println!("Best for BP {} is {}", idx + 1, score);
+            score
+        })
+        .product()
+}
+
 fn get_best_score(
     state: State,
     blueprint: &Blueprint,
@@ -274,10 +302,12 @@ fn get_best_score(
 
     // Trying to prune if we assumed all new Geode bots from here on, can that beat the current best
     // Works - but not convinced by it - some speedup, but we are already 25ms...
-    // let best_remaining_score = (state.time_remaining) * (state.time_remaining + 1) / 2u32;
-    // if current + best_remaining_score <= *best {
-    //     return 0;
-    // }
+
+    // I take it back - really helps with part2, convinced myself it is legit.
+    let best_remaining_score = (state.time_remaining) * (state.time_remaining + 1) / 2;
+    if current + best_remaining_score <= *best {
+        return 0;
+    }
 
     // println!("State: {}", state);
 
