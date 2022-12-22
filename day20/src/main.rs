@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 fn test() {
     // Treatise on remainder vs modulo for -ve numbers.
     // let mo = 7;
@@ -11,11 +13,22 @@ fn test() {
             std::fs::read_to_string("input_sample.txt")
                 .unwrap()
                 .as_str(),
+            1,
+            1,
         ) == 3
+    );
+    debug_assert!(
+        part1(
+            std::fs::read_to_string("input_sample.txt")
+                .unwrap()
+                .as_str(),
+            811589153,
+            10
+        ) == 1623178306
     );
 }
 
-fn calc_result(v: Vec<NumberWithPosition>) -> i32 {
+fn calc_result(v: Vec<NumberWithPosition>) -> i64 {
     let zero_at = v.iter().position(|x| x.number == 0).unwrap();
     let mut answer = Vec::new();
 
@@ -27,20 +40,20 @@ fn calc_result(v: Vec<NumberWithPosition>) -> i32 {
 
 // So there are duplicate numbers in the non-sample data - and all previous entries didn't work
 // because we assumed there weren't - make a struct to keep them separate.
-
+#[derive(Debug)]
 struct NumberWithPosition {
-    number: i32,
+    number: i64,
     orig_pos: usize,
 }
 
-fn part1(data: &str) -> i32 {
+fn part1(data: &str, scale: i64, iterations: usize) -> i64 {
     let mut i = 0;
     let mut origlist: Vec<NumberWithPosition> = data
         .split('\n')
         .filter(|y| !y.is_empty())
         .map(|x| {
             let r = NumberWithPosition {
-                number: x.parse::<i32>().unwrap(),
+                number: x.parse::<i64>().unwrap() * scale,
                 orig_pos: i,
             };
             i += 1;
@@ -49,33 +62,36 @@ fn part1(data: &str) -> i32 {
         .collect();
 
     let message_size = origlist.len() - 1;
-    for orig_pos in 0..=message_size {
-        let cur_pos = origlist
-            .iter()
-            .position(|x| x.orig_pos == orig_pos)
-            .unwrap();
-        let value = origlist[cur_pos].number;
+    for _mixes in 0..iterations {
+        for orig_pos in 0..=message_size {
+            let cur_pos = origlist
+                .iter()
+                .position(|x| x.orig_pos == orig_pos)
+                .unwrap();
+            let value = origlist[cur_pos].number;
 
-        let new_pos = (cur_pos as i32 + value).rem_euclid(message_size as i32);
+            let new_pos = (cur_pos as i64 + value).rem_euclid(message_size as i64);
 
-        let elem = origlist.remove(cur_pos);
-        origlist.insert(new_pos as usize, elem);
+            let elem = origlist.remove(cur_pos);
+            origlist.insert(new_pos as usize, elem);
+        }
     }
     calc_result(origlist)
 }
 
 fn main() {
+    const DECRYPTION_KEY: i64 = 811589153;
     test();
-    let p1 = part1(std::fs::read_to_string("input.txt").unwrap().as_str());
+    let now = Instant::now();
+    let p1 = part1(std::fs::read_to_string("input.txt").unwrap().as_str(), 1, 1);
     println!("Part1: {}", p1);
-    assert!(p1 != -12134); // First wrong answer
-    assert!(p1 != 18535); // Another wrong answer.
-    assert!(p1 != -13438);
-    assert!(p1 != -22100);
-    assert!(p1 == 23321); // Finally :)
-
-    // assert!(p1 == ??);
-    // let p2 = part2(std::fs::read_to_string("input.txt").unwrap().as_str());
-    // println!("Part2: {}", p2);
-    // assert!(p2 == ??);
+    assert!(p1 == 23321);
+    let p2 = part1(
+        std::fs::read_to_string("input.txt").unwrap().as_str(),
+        DECRYPTION_KEY,
+        10,
+    );
+    println!("Part2: {}", p2);
+    assert!(p2 == 1428396909280);
+    println!("Completed in {} us", now.elapsed().as_micros());
 }
