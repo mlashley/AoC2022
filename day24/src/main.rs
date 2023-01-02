@@ -149,6 +149,7 @@ fn part1(data: &str) -> usize {
     let mut q = VecDeque::new();
     let mut seen: HashSet<State> = HashSet::new();
     q.push_back(state);
+    let mut best = usize::MAX;
 
     while let Some(curr_state) = q.pop_front() {
         if seen.contains(&curr_state) {
@@ -156,9 +157,6 @@ fn part1(data: &str) -> usize {
         } 
         seen.insert(curr_state);
 
-        let best = seen.iter()
-        .filter(|s| s.y == player.map_height-1 && s.x == player.map_width-2 ) // Goal State
-        .map(|s| s.time).min().unwrap_or(usize::MAX);
         if best < curr_state.time { // prune
             // println!("Prune: {}, {:?}",best,curr_state);
             continue;
@@ -166,6 +164,7 @@ fn part1(data: &str) -> usize {
 
         if curr_state.y == player.map_height-1 && curr_state.x == player.map_width-2 {
             println!("Goal {:?}", curr_state);
+            if curr_state.time < best { best = curr_state.time; }
             continue;
         }
 
