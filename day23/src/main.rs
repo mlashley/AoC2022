@@ -228,5 +228,12 @@ fn main() {
     );
     println!("Part1: {}", p1);
     assert!(p1 == 4247);
+    let p2 = part1(
+        std::fs::read_to_string("input.txt").unwrap().as_str(),
+        10000,
+        true,
+    );
+    println!("Part2: {}", p2);
+    assert!(p2 == 1049);
     println!("Completed in {} us", now.elapsed().as_micros());
 }
