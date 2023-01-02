@@ -22,9 +22,10 @@ fn test() {
             std::fs::read_to_string("input_sample.txt")
                 .unwrap()
                 .as_str(),
+            false,
         ) == 18
     );
-    //debug_assert!(part2(std::fs::read_to_string("input.txt").unwrap().as_str(),) == ??);
+    debug_assert!(part1(std::fs::read_to_string("input_sample.txt").unwrap().as_str(),true) == 54);
 }
 
 #[derive(Debug, Clone, Default)]
@@ -137,15 +138,18 @@ struct State {
     x: usize,
     y: usize,
     time: usize,
+    end_visited: bool,
+    start_visited: bool,
 }
 
-fn part1(data: &str) -> usize {
+fn part1(data: &str, is_part2: bool) -> usize {
     let mut player = Valley::from_str(data);
 
-    println!("PLAYER: {:?}", player);
     player.gen_bad_map(1000);
 
-    let state = State { x: 1, y:0 , time :0 };
+    let state = State { x: 1, y:0 , time :0, end_visited: !is_part2, start_visited: !is_part2 };
+
+
     let mut q = VecDeque::new();
     let mut seen: HashSet<State> = HashSet::new();
     q.push_back(state);
@@ -162,7 +166,17 @@ fn part1(data: &str) -> usize {
             continue;
         }
 
-        if curr_state.y == player.map_height-1 && curr_state.x == player.map_width-2 {
+        let mut end_visited = curr_state.end_visited;
+        let mut start_visited = curr_state.start_visited;
+
+        if curr_state.y == player.map_height-1 && curr_state.x == player.map_width-2 && !curr_state.end_visited {
+            end_visited = true;
+        }
+        if curr_state.y == 0 && curr_state.x == 1 && curr_state.end_visited && !curr_state.start_visited {
+            start_visited = true;
+        }
+
+        if curr_state.y == player.map_height-1 && curr_state.x == player.map_width-2 && curr_state.end_visited && curr_state.start_visited {
             println!("Goal {:?}", curr_state);
             if curr_state.time < best { best = curr_state.time; }
             continue;
@@ -175,35 +189,36 @@ fn part1(data: &str) -> usize {
         if player.bad_map[t+1][y][x] {
             // A storm is coming, cannot stay put
         } else {
-            q.push_back(State { x, y, time: t+1});
+            q.push_back(State { x, y, time: t+1, end_visited, start_visited });
         }
 
         // South
-        if player.bad_map[t+1][y+1][x] {
-            // A storm/wall will be there - cannot move
-        } else {
-            q.push_back(State { x, y: y+1, time: t+1});
+        if y < player.map_height-1 {
+            if player.bad_map[t+1][y+1][x] {
+                // A storm/wall will be there - cannot move
+            } else {
+                q.push_back(State { x, y: y+1, time: t+1, end_visited, start_visited});
+            }
         }
-
         // North
         if y>0 && player.bad_map[t+1][y-1][x] {
             // A storm/wall will be there - cannot move
         } else if y>0 {
-            q.push_back(State { x, y: y-1, time: t+1});
+            q.push_back(State { x, y: y-1, time: t+1, end_visited, start_visited});
         }
 
         // East
         if player.bad_map[t+1][y][x+1] {
             // A storm/wall will be there - cannot move
         } else {
-            q.push_back(State { x: x+1, y, time: curr_state.time+1});
+            q.push_back(State { x: x+1, y, time: curr_state.time+1, end_visited, start_visited});
         }     
 
         // West
         if x>0 && player.bad_map[t+1][y][x-1] {
             // A storm/wall will be there - cannot move
         } else if x>0 {
-            q.push_back(State { x: x-1, y, time: curr_state.time+1});
+            q.push_back(State { x: x-1, y, time: curr_state.time+1, end_visited, start_visited});
         }   
     }
 
@@ -216,11 +231,11 @@ fn part1(data: &str) -> usize {
 fn main() {
     test();
     let now = Instant::now();
-    let p1 = part1(std::fs::read_to_string("input.txt").unwrap().as_str());
+    let p1 = part1(std::fs::read_to_string("input.txt").unwrap().as_str(),false);
     println!("Part1: {}", p1);
     assert!(p1 == 334);
-    // let p2 = part2(std::fs::read_to_string("input.txt").unwrap().as_str());
-    // println!("Part2: {}", p2);
-    // assert!(p2 == ?);
+    let p2 = part1(std::fs::read_to_string("input.txt").unwrap().as_str(),true);
+    println!("Part2: {}", p2);
+    assert!(p2 == 934);
     println!("Completed in {} us", now.elapsed().as_micros());
 }
