@@ -206,11 +206,8 @@ fn part1(data: &str) -> usize {
             q.push_back(State { x: x-1, y, time: curr_state.time+1});
         }   
     }
-  
 
-    seen.iter()
-    .filter(|s| s.y == player.map_height-1 && s.x == player.map_width-2 ) // Goal State
-    .map(|s| s.time).min().unwrap_or(usize::MAX)
+    best
 
 }
 
