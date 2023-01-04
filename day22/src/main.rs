@@ -1,6 +1,5 @@
 use itertools::Itertools;
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::ops::BitAnd;
 use std::time::Instant;
 
@@ -136,8 +135,7 @@ impl PlayerOne {
         let mapheight = data
             .split('\n')
             .filter(|x| x.contains('.'))
-            .collect::<Vec<&str>>()
-            .len();
+            .count();
         // is either 4x3 or 3x4...
         let orientation = if mapwidth > mapheight {
             FlatMapOrientation::Horizontal
@@ -166,17 +164,13 @@ impl PlayerOne {
 
         let mut foldme = Vec::new();
         let mut i: u8 = 0x40;
-        let mut Axy: (usize, usize) = (9, 9);
-        for y in (0..mapheight / cubesize) {
+        for y in 0..mapheight / cubesize {
             let mut row: Vec<char> = Vec::new();
-            for x in (0..mapwidth / cubesize) {
+            for x in 0..mapwidth / cubesize {
                 row.push(if flatmap[y * cubesize][x * cubesize] == ' ' {
                     ' '
                 } else {
                     i += 1;
-                    if i == 0x41 {
-                        Axy = (x, y)
-                    }
                     i as char
                 });
             }
@@ -195,20 +189,19 @@ impl PlayerOne {
         for row in &foldme {
             println!("{:?}", row);
         }
-        println!("A is at {:?}", Axy);
         // A is always front...
 
         // Map-X-Axis Joins
-        for y in 0..foldme.len() {
+        for row in &foldme {
             let mut last = if orientation == FlatMapOrientation::Horizontal {
-                foldme[y].iter().last().unwrap().clone() // this joins the left side to the right side - we have this in neither our sample or actual data.
+                *row.iter().last().unwrap() // this joins the left side to the right side - we have this in neither our sample or actual data.
             } else {
                 ' '
             };
 
-            for curr in foldme[y].iter() {
+            for curr in row.iter() {
                 if *curr == ' ' {
-                    last = ' ';
+                    // last = ' '; will be taken care by the outer assignment last = *curr
                 } else if last != ' ' && *curr != ' ' {
                     // last and curr are joined on L2 = C4 and C4=L2
                     edges.insert((last, 2), (*curr, 4));
@@ -231,10 +224,11 @@ impl PlayerOne {
                 ' '
             };
 
-            for y in 0..foldme.len() {
-                let curr = foldme[y][x];
+            // for y in 0..foldme.len() {
+            for row in &foldme {
+                let curr = row[x];
                 if curr == ' ' {
-                    last = ' ';
+                    // last = ' '; will be taken care by the outer assignment last = *curr
                 } else if last != ' ' && curr != ' ' {
                     // last and curr are joined on L3=C1 and C1=L3 (top and bottom edges)
                     edges.insert((last, 3), (curr, 1));
@@ -458,7 +452,7 @@ impl PlayerOne {
 
             // Are we about to move off the side?
             let mut curr_face = self.get_side();
-            let mut next_face: (char,u8);
+            let next_face: (char,u8);
 
             let (fx,fy) = self.flat_to_face(self.x as usize, self.y as usize);
 
@@ -736,8 +730,6 @@ fn part2(data: &str) -> i64 {
             Instruction::Rotate(r) => player.rot(r),
             Instruction::Forward(d) => player.mov2(d),
         }
-        player.print_map();
-
     }
     player.print_map();
     player.password()
@@ -751,6 +743,6 @@ fn main() {
     assert!(p1 == 76332);
     let p2 = part2(std::fs::read_to_string("input.txt").unwrap().as_str());
     println!("Part2: {}", p2);
-    assert!(p2 as i64 == 144012);
+    assert!(p2 == 144012);
     println!("Completed in {} us", now.elapsed().as_micros());
 }
