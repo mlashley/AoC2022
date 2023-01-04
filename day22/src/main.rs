@@ -383,18 +383,16 @@ impl PlayerOne {
         if (self.y as usize + 1) % self.cubesize == 0 {
             my_edges |= 1 << 2;
         }
-        println!("Side of {},{} => [{}.{}] is {}, Edges: {}",self.x,self.y,small_x,small_y,side,my_edges);
-
+        // println!("Side of {},{} => [{}.{}] is {}, Edges: {}",self.x,self.y,small_x,small_y,side,my_edges);
         (side,my_edges)
     }
 
     fn flat_to_face(&self,x: usize ,y: usize) -> (usize,usize) {
         let small_y = y  / self.cubesize;
         let small_x = x  / self.cubesize;
-        let side = self.foldme[small_y][small_x];
         let face_x = x - (small_x*self.cubesize);
         let face_y = y - (small_y*self.cubesize);
-        println!("Global {},{} => side {} face_coord {},{}",x,y,side,face_x,face_y);
+        // println!("Global {},{} => side {} face_coord {},{}",x,y,side,face_x,face_y);
         (face_x,face_y)
     }
 
@@ -409,7 +407,7 @@ impl PlayerOne {
                 small_y += 1;
             }
         }
-        println!("face_to_flat: Found {} at {} {}",face,small_x,small_y);
+        // println!("face_to_flat: Found {} at {} {}",face,small_x,small_y);
         let flat_x = (small_x*self.cubesize)+face_x;
         let flat_y = (small_y*self.cubesize)+face_y;
         (flat_x as i64,flat_y as i64)
@@ -474,9 +472,7 @@ impl PlayerOne {
                 curr_face.1 = 4;
             } else { 
                 next_face = curr_face;
-
-                //normal - already set above.
-                // todo!("Normal move")
+                //normal - already set nextx/y above.
             }
             if curr_face.0 != next_face.0 {
                 if curr_face.1 % 2 == 0 {   
@@ -491,9 +487,6 @@ impl PlayerOne {
                                 4 => (nextx,nexty) = self.face_to_flat(next_face.0, 0, (self.cubesize-1)-fy ),
                                 _ => { panic!("Next side is not 2 or 4.. got {}",next_face.1)},
                             };
-
-                            // todo!("E/E(==) flip y and rotate 180 {:?} {:?}",curr_face,next_face);
-
                         } else {
                             // E/E(!=) works as flat
                         }
@@ -509,9 +502,7 @@ impl PlayerOne {
                             _ => panic!("Funny old E/O != pair? {:?}, {:?}", curr_face,next_face)
                         };
                         next_rot = (((self.facing+rot) % 360) + 360) % 360; // modulo
-                        println!("nfx,y {},{} [fx, fy {},{}]",nfx,nfy,fx,fy);
                         (nextx,nexty) = self.face_to_flat(next_face.0, nfx, nfy);
-                        println!("E/O(!=) y=>x and rotate {:?} {:?}",curr_face,next_face);
                     }
 
                 } else {
@@ -525,8 +516,6 @@ impl PlayerOne {
                             4 => (nextx,nexty) = self.face_to_flat(next_face.0, 0, fx),
                             _ => { panic!("Next side is not 2 or 4.. got {}",next_face.1)},
                         };
-                        // todo!("O/E(!=) x=>y and rotate {:?} {:?}",curr_face,next_face);
-                        
                     } else { 
                         // next face is odd
                         if curr_face.1 == next_face.1 {
@@ -553,28 +542,8 @@ impl PlayerOne {
                 }
                 
             }
-        // Odd/Odd(!=) and Even/Even(!=) edges all stay flat (1-3, 2-4 etc)
-        // Even/Even(equal) edge-pairs (2-2, 4-4) are flipped so the y0 => ymax and ymax => y0 as they cross:  y=>ymax-y 180deg rotate from flatmap perspective.
-        // Odd/Odd(equal) - dunno?
-        // Odd/Even => x=>y (also rotate from 'flatmap' perspective)
-        // Even/Odd => y=>x (also rotate from 'flatmap' perspective)
 
-
-            // if nexty < 0 {
-            //     nexty = self.map.len() as i64 - 1
-            // } // wrap top around to bottom
-            // if nextx < 0 {
-            //     nextx = self.map[0].len() as i64 - 1
-            // } // wrap
-            // if nexty == self.map.len() as i64 {
-            //     nexty = 0
-            // } // wrap
-            // if nextx == self.map[0].len() as i64 {
-            //     nextx = 0
-            // } // wrap
-
-            println!("NextX,Y is {},{} looking for space",nextx,nexty);
-
+            // println!("NextX,Y is {},{} looking for space",nextx,nexty);
 
             assert!(nextx >= 0);
             assert!(nexty >= 0);
